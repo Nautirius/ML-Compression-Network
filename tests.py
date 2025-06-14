@@ -26,7 +26,7 @@ def train_autoencoder(
     lr: float = 1e-3,
     root_out: str = "tests",
     allow_non_monotonic: bool = False,
-    max_extra_epochs: int | None = 10,
+    max_extra_epochs: int | None = 4,
 ) -> float:
     """Train *net* until MSE nie wzrośnie względem poprzedniego kroku.
 
@@ -235,8 +235,9 @@ def evaluate_autoencoder(
 
 def run():
     models_to_train = [
-        models.Conv1d_Strided_Autoencoder_V2.Conv1d_Strided_Autoencoder(stride=1),
-        # Conv1d_Generic_Autoencoder(),
+        models.Conv1d_Strided_Autoencoder_V2.Conv1d_Strided_Autoencoder(stride=1, kernel_size=3),
+        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3),
+        # Conv1d_Generic_Autoencoder(activation="gelu", kernel_size=5),
         # Conv1d_Generic_Autoencoder_Pool(
         #     input_length=187,
         #     conv_channels=[32, 64, 128],
@@ -278,7 +279,7 @@ def run():
     loader_test = pandas_to_loader(df_test)
 
     for model in models_to_train:
-        training_time = train_autoencoder(model, loader_train, loader_test, epochs=10)
+        training_time = train_autoencoder(model, loader_train, loader_test, epochs=6)
         evaluate_autoencoder(model, loader_test, training_time_s =training_time)
 
 

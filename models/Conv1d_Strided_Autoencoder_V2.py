@@ -11,31 +11,25 @@ import torch.optim as optim
 import matplotlib.pyplot as plt
 from models.Compressor import Compressor
 
-class ResidualBlock(nn.Module):
-    """1‑D residual block: Conv1d → activation with optional projection skip."""
+class ResBlock1d(nn.Module):
+    """Prosty blok residual: Conv1d → Act → Conv1d + skip."""
 
-    def __init__(self, in_ch: int, out_ch: int, *, kernel: int, stride: int, activation: nn.Module):
+    def __init__(self, channels: int, kernel_size: int = 3, activation: nn.Module = nn.ReLU):
         super().__init__()
-        pad = kernel // 2
-        self.conv = nn.Conv1d(in_ch, out_ch, kernel, stride=stride, padding=pad)
-        self.act = activation
-        self.skip = (
-            nn.Conv1d(in_ch, out_ch, 1, stride=stride)
-            if (in_ch != out_ch or stride != 1)
-            else nn.Identity()
-        )
+        pad = kernel_size // 2
+        self.conv1 = nn.Conv1d(channels, channels, kernel_size, padding=pad)
+        self.conv2 = nn.Conv1d(channels, channels, kernel_size, padding=pad)
+        self.act = activation()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:  # type: ignore[override]
-        return self.act(self.conv(x) + self.skip(x))
-
-###############################################################################
-# Conv1d auto‑encoder families                                                #
-###############################################################################
+        out = self.act(self.conv1(x))
+        out = self.conv2(out)
+        return self.act(out + x)
 
 class Conv1d_Strided_Autoencoder(nn.Module, Compressor):
-    """Strided Conv1d auto‑encoder with optional residual blocks and GAP."""
+    """Minimal Conv1d auto‑encoder z jednolitym stride."""
 
-    ACT_MAP = {
+    ACT = {
         "relu": nn.ReLU,
         "gelu": nn.GELU,
         "silu": nn.SiLU,
@@ -50,59 +44,46 @@ class Conv1d_Strided_Autoencoder(nn.Module, Compressor):
         conv_channels: Sequence[int] = (32, 64, 128),
         code_dim: int = 16,
         kernel_size: int = 3,
-        activation: str = "gelu",
-        stride: int = 1,
-        use_residual: bool = True,
-        use_adaptive_pool: bool = True,
+        activation: str = "relu",
+        stride: int = 2,
     ) -> None:
         super().__init__()
         if stride < 1:
             raise ValueError("stride musi być ≥ 1")
 
-        # ---------------- attributes ----------------
         self.input_length = input_length
-        self.input_dim = input_length  # for compression‑ratio utils
-        self.code_dim = code_dim
+        self.input_dim = input_length
         self.conv_channels = list(conv_channels)
+        self.code_dim = code_dim
         self.kernel_size = kernel_size
         self.stride = stride
-        self.use_residual = use_residual
-        self.use_adaptive_pool = use_adaptive_pool
 
-        act_factory = self.ACT_MAP[activation]
         pad = kernel_size // 2
+        act = self.ACT.get(activation, nn.ReLU)
 
-        # ---------------- encoder -------------------
-        enc_layers: List[nn.Module] = []
+        # Encoder -------------------------------------------------------
+        enc: List[nn.Module] = []
         in_ch = 1
-        out_len = input_length
+        length = input_length
         for ch in self.conv_channels:
-            if use_residual:
-                enc_layers.append(
-                    ResidualBlock(in_ch, ch, kernel=kernel_size, stride=stride, activation=act_factory())
-                )
-            else:
-                enc_layers.extend([
-                    nn.Conv1d(in_ch, ch, kernel_size, stride=stride, padding=pad),
-                    act_factory(),
-                ])
-            out_len = math.ceil(out_len / stride)
+            enc.extend([
+                nn.Conv1d(in_ch, ch, kernel_size, stride=stride, padding=pad),
+                act(),
+            ])
+            length = math.ceil(length / stride)
             in_ch = ch
-        if use_adaptive_pool:
-            enc_layers.append(nn.AdaptiveAvgPool1d(1))
-            out_len = 1
-        self.encoder = nn.Sequential(*enc_layers)
-        self.latent_len = out_len
+        self.encoder_conv = nn.Sequential(*enc)
+        self.latent_len = length
 
-        # ---------------- bottleneck --------------
+        # Bottleneck ----------------------------------------------------
         self.to_latent = nn.Conv1d(self.conv_channels[-1], code_dim, 1)
         self.from_latent = nn.Conv1d(code_dim, self.conv_channels[-1], 1)
 
-        # ---------------- decoder -----------------
-        dec_layers: List[nn.Module] = []
+        # Decoder -------------------------------------------------------
+        dec: List[nn.Module] = []
         in_ch = self.conv_channels[-1]
         for out_ch in self.conv_channels[::-1][1:]:
-            dec_layers.extend([
+            dec.extend([
                 nn.ConvTranspose1d(
                     in_ch,
                     out_ch,
@@ -111,10 +92,10 @@ class Conv1d_Strided_Autoencoder(nn.Module, Compressor):
                     padding=pad,
                     output_padding=stride - 1,
                 ),
-                act_factory(),
+                act(),
             ])
             in_ch = out_ch
-        dec_layers.append(
+        dec.append(
             nn.ConvTranspose1d(
                 in_ch,
                 1,
@@ -124,36 +105,26 @@ class Conv1d_Strided_Autoencoder(nn.Module, Compressor):
                 output_padding=stride - 1,
             )
         )
-        self.decoder = nn.Sequential(*dec_layers)
+        self.decoder = nn.Sequential(*dec)
 
-        # for CR display
         self.layer_dims = [input_length] + self.conv_channels + [code_dim]
 
-    # ---------------- interface ---------------
+    # ------------------------------------------------------------------
     def forward(self, x: torch.Tensor) -> torch.Tensor:  # type: ignore[override]
         if x.ndim == 2:
             x = x.unsqueeze(1)
-        z = self.to_latent(self.encoder(x))
+        z = self.to_latent(self.encoder_conv(x))
         recon = self.decoder(self.from_latent(z))
         return recon[:, :, : self.input_length].squeeze(1)
 
     def compress(self, x: torch.Tensor) -> torch.Tensor:
         if x.ndim == 2:
             x = x.unsqueeze(1)
-        return self.to_latent(self.encoder(x))
+        return self.to_latent(self.encoder_conv(x))
 
     def decompress(self, code: torch.Tensor) -> torch.Tensor:
         recon = self.decoder(self.from_latent(code))
         return recon[:, :, : self.input_length].squeeze(1)
 
-    def __str__(self) -> str:  # noqa: D401
-        flags = []
-        if self.use_residual:
-            flags.append("res")
-        if self.use_adaptive_pool:
-            flags.append("gap")
-        flag_part = ("_" + "-".join(flags)) if flags else ""
-        return (
-            f"{self.__class__.__name__}_{[1,*self.conv_channels,1]}_s" \
-            f"{self.stride}_code{self.code_dim}{flag_part}"
-        )
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}2_{[1,*self.conv_channels,1]}_s{self.stride}_code{self.code_dim}"

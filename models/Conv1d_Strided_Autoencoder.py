@@ -37,8 +37,8 @@ class Conv1d_Strided_Autoencoder(nn.Module, Compressor):
         conv_channels: Sequence[int] = (32, 64, 128),
         code_dim: int = 16,
         kernel_size: int = 3,
-        activation: str = "relu",
-        stride: int = 2,
+        activation: str = "gelu",
+        stride: int = 1,
     ) -> None:
         super().__init__()
         if stride < 1:

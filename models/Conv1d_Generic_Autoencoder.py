@@ -29,7 +29,7 @@ class Conv1d_Generic_Autoencoder(nn.Module, Compressor):
             conv_channels: Sequence[int] = (32, 64, 128),
             code_dim: int = 16,
             kernel_size: int = 3,
-            activation: str = "leaky_relu",
+            activation: str = "gelu",
     ) -> None:
         super().__init__()
         self.input_length = input_length  # alias for compression‑ratio calc
