@@ -9,6 +9,7 @@ class MLP_Generic_Autoencoder(nn.Module, Compressor):
         """
         super().__init__()
         assert len(layer_dims) >= 2, "Wymagane co najmniej dwa wymiary (wejście i wyjście)"
+        self.layer_dims = layer_dims
 
         encoder_layers = []
         for in_dim, out_dim in zip(layer_dims[:-1], layer_dims[1:]):
@@ -33,3 +34,6 @@ class MLP_Generic_Autoencoder(nn.Module, Compressor):
 
     def decompress(self, code):
         return self.decoder(code)
+
+    def __str__(self):
+        return f"MLP_Generic_Autoencoder {self.layer_dims}"
