@@ -1,0 +1,32 @@
+import torch.nn as nn
+
+from models.Compressor import Compressor
+
+
+class MLP_Simple_Autoencoder(nn.Module, Compressor):
+    def __init__(self, input_dim: int = 187, compressed_dim: int = 16):
+        super().__init__()
+        self.encoder = nn.Sequential(
+            nn.Linear(input_dim, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, 16),
+        )
+        self.decoder = nn.Sequential(
+            nn.Linear(compressed_dim, 64),
+            nn.ReLU(),
+            nn.Linear(64, 128),
+            nn.ReLU(),
+            nn.Linear(128, input_dim),
+        )
+
+    def forward(self, x):
+        z = self.encoder(x)
+        return self.decoder(z)
+
+    def compress(self, x):
+        return self.encoder(x)
+
+    def decompress(self, code):
+        return self.decoder(code)
