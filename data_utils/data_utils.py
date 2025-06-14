@@ -11,7 +11,6 @@ def load_and_preprocess_data(input_path: str, cleaning_strategy: str = "knn") ->
     df = pd.read_csv(input_path, header=None)
     X = df.iloc[:, :-1].copy()  # 187 punktów sygnału
     y = df.iloc[:, -1]  # signal class
-    print(y)
     X_clean = _clean_missing_values(X, strategy=cleaning_strategy)
     #
     # scaler = MinMaxScaler()

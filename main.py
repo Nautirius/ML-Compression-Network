@@ -99,7 +99,8 @@ def stats_cmd(filepath: str, model: str):
     # Pomiar rozmiaru
     original_size = os.path.getsize(filepath)
     compressed_size = os.path.getsize(compressed_file)
-    compression_ratio = compressed_size / original_size
+    # compression_ratio = compressed_size / original_size
+    compression_ratio = original_size / compressed_size
 
     # Wczytywanie danych CSV
     original = load_and_preprocess_data(filepath)
@@ -115,7 +116,7 @@ def stats_cmd(filepath: str, model: str):
 
     click.echo(f"Rozmiar oryginału: {original_size} bytes")
     click.echo(f"Rozmiar skompresowany: {compressed_size} bytes")
-    click.echo(f"Stopień kompresji: {compression_ratio*100:.2f}%")
+    click.echo(f"Współczynnik kompresji: {compression_ratio}")
     click.echo(f"Błąd średniokwadratowy (MSE): {mse}")
 
 
