@@ -3,6 +3,7 @@ import time
 import json
 import math
 import statistics as stats
+import numpy as np
 from typing import Dict, List, Tuple, Optional, Sequence
 
 import torch
@@ -13,20 +14,13 @@ from models.Compressor import Compressor
 
 
 class Conv1d_Strided_Autoencoder(nn.Module, Compressor):
-    """Minimal **Conv1d** auto‑encoder z jednym, wspólnym `stride`.
+    """Konfigurowalny autoenkoder 1-D – compress/decompress przyjmują tylko NumPy."""
 
-    * Brak BN / Dropout.
-    * Ten sam ``stride`` (np. 2) w każdej warstwie enkodera ⇒ regularne
-      down‑sampling.
-    * Dekoder symetryczny z `ConvTranspose1d` o tym samym stride.
-    * Bottleneck to 1×1 conv na skróconym sygnale.
-    """
-
-    ACT_MAP = {
+    ACTS = {
         "relu": nn.ReLU,
         "gelu": nn.GELU,
         "silu": nn.SiLU,
-        "elu": nn.ELU,
+        "elu":  nn.ELU,
         "leaky_relu": lambda: nn.LeakyReLU(0.1),
     }
 
@@ -37,104 +31,88 @@ class Conv1d_Strided_Autoencoder(nn.Module, Compressor):
         conv_channels: Sequence[int] = (32, 64, 128),
         code_dim: int = 16,
         kernel_size: int = 3,
+        stride: int = 1,
         activation: str = "gelu",
-        stride: int = 2,
     ) -> None:
         super().__init__()
-        if stride < 1:
-            raise ValueError("stride musi być ≥ 1")
-
-        # --------------------------- atrybuty ---------------------------
         self.input_length = input_length
-        self.input_dim = input_length
-        self.code_dim = code_dim
-        self.conv_channels = list(conv_channels)
-        self.kernel_size = kernel_size
-        self.stride = stride
-        self.activation_name = activation
+        self.code_dim     = code_dim
 
         pad = kernel_size // 2
-        act_factory = self.ACT_MAP.get(activation, nn.ReLU)
+        act = self.ACTS.get(activation, nn.ReLU)
 
-        # --------------------------- encoder ---------------------------
-        enc_layers: List[nn.Module] = []
+        # -------- encoder --------
+        enc = []
         in_ch = 1
-        out_len = input_length
-        for ch in self.conv_channels:
-            enc_layers.extend([
-                nn.Conv1d(in_ch, ch, kernel_size, stride=self.stride, padding=pad),
-                act_factory(),
-            ])
-            out_len = math.ceil(out_len / self.stride)
-            in_ch = ch
-        self.encoder = nn.Sequential(*enc_layers)
-        self.latent_len = out_len
+        for out_ch in conv_channels:
+            enc += [
+                nn.Conv1d(in_ch, out_ch, kernel_size,
+                          stride=stride, padding=pad),
+                act(),
+            ]
+            in_ch = out_ch
+        enc.append(nn.AdaptiveAvgPool1d(1))      # latent_len == 1
+        self.encoder = nn.Sequential(*enc)
 
-        # bottleneck ----------------------------------------------------
-        self.to_latent = nn.Conv1d(self.conv_channels[-1], code_dim, 1)
-        self.from_latent = nn.Conv1d(code_dim, self.conv_channels[-1], 1)
+        # bottleneck 1×1
+        self.to_latent   = nn.Conv1d(in_ch, code_dim, 1)
+        self.from_latent = nn.Conv1d(code_dim, in_ch, 1)
 
-        # --------------------------- decoder ---------------------------
-        dec_layers: List[nn.Module] = []
-        in_ch = self.conv_channels[-1]
-        for out_ch in self.conv_channels[::-1][1:]:
-            dec_layers.extend([
+        # -------- decoder --------
+        dec = []
+        for out_ch in reversed(conv_channels[:-1]):
+            dec += [
                 nn.ConvTranspose1d(
                     in_ch, out_ch, kernel_size,
-                    stride=self.stride, padding=pad, output_padding=self.stride - 1,
-                ),
-                act_factory(),
-            ])
+                    stride=stride, padding=pad, output_padding=stride - 1),
+                act(),
+            ]
             in_ch = out_ch
-        # końcowa warstwa na 1 kanał
-        dec_layers.append(
+        dec.append(
             nn.ConvTranspose1d(
                 in_ch, 1, kernel_size,
-                stride=self.stride, padding=pad, output_padding=self.stride - 1,
-            )
+                stride=stride, padding=pad, output_padding=stride - 1)
         )
-        self.decoder = nn.Sequential(*dec_layers)
+        self.decoder = nn.Sequential(*dec)
 
-        # do kalkulacji CR w helperach
-        self.layer_dims = [input_length] + self.conv_channels + [code_dim]
+    # ---------------- API ----------------
+    @torch.no_grad()
+    def compress(self, x: np.ndarray) -> np.ndarray:
+        """Zwraca tablicę NumPy (code_dim,) – dokładnie kod."""
+        if not isinstance(x, np.ndarray):
+            raise TypeError("compress() oczekuje jednowymiarowej tablicy NumPy")
+        if x.ndim != 1:
+            raise ValueError("compress() wymaga 1-D tablicy NumPy")
 
-    # ------------------------------------------------------------------
-    # def forward(self, x: torch.Tensor) -> torch.Tensor:  # type: ignore[override]
-    #     if x.ndim == 2:
-    #         x = x.unsqueeze(1)
-    #     z = self.to_latent(self.encoder(x))
-    #     recon = self.decoder(self.from_latent(z))
-    #     return recon[:, :, : self.input_length].squeeze(1)
-    #
-    # def compress(self, x: torch.Tensor) -> torch.Tensor:
-    #     if x.ndim == 2:
-    #         x = x.unsqueeze(1)
-    #     return self.to_latent(self.encoder(x))
-    #     # return self.encoder(x)
-    #
-    # def decompress(self, code: torch.Tensor) -> torch.Tensor:
-    #     recon = self.decoder(self.from_latent(code))
-    #     return recon[:, :, : self.input_length].squeeze(1)
-    #     # return self.decoder(code)
+        tensor = torch.from_numpy(x.astype(np.float32))  # [L]
+        tensor = tensor.unsqueeze(0).unsqueeze(0).to(self.device)  # [1,1,L]
+
+        z = self.to_latent(self.encoder(tensor))          # [1, code_dim, 1]
+        return z.squeeze().cpu().numpy()                  # (code_dim,)
+
+    @torch.no_grad()
+    def decompress(self, code: np.ndarray) -> np.ndarray:
+        """Odtwarza sekwencję – również zwraca NumPy 1-D (input_length,)."""
+        if not isinstance(code, np.ndarray):
+            raise TypeError("decompress() oczekuje tablicy NumPy")
+        if code.ndim != 1 or code.size != self.code_dim:
+            raise ValueError(
+                f"decompress() wymaga wektora 1-D długości {self.code_dim}"
+            )
+
+        tensor = torch.from_numpy(code.astype(np.float32))       # [code_dim]
+        tensor = tensor.unsqueeze(0).unsqueeze(-1).to(self.device)  # [1,code_dim,1]
+
+        recon = self.decoder(self.from_latent(tensor))           # [1,1,L+pad]
+        return recon.squeeze().cpu().numpy()[: self.input_length]
+
+    # „zwykły” forward do trenowania
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        if x.ndim == 2:
-            x = x.unsqueeze(1)
+        if x.ndim == 2:                      # [B, L]
+            x = x.unsqueeze(1)               # [B, 1, L]
         z = self.to_latent(self.encoder(x))
         recon = self.decoder(self.from_latent(z))
-        return recon[:, :, :self.input_length].squeeze(1)
-
-    def compress(self, x: torch.Tensor) -> torch.Tensor:
-        if x.ndim == 2:
-            x = x.unsqueeze(1)
-        z = self.to_latent(self.encoder(x))
-        z = z.view(z.size(0), -1)  # [B, code_dim * latent_len]
-        return z
-
-    def decompress(self, code: torch.Tensor) -> torch.Tensor:
-        # code = code.double()  # <- konwersja z float16 do double
-        code = code.view(-1, self.code_dim, self.latent_len)
-        recon = self.decoder(self.from_latent(code))
-        return recon[:, :, :self.input_length].squeeze(1)
+        return recon[:, :, : self.input_length].squeeze(1)
 
     def compressed_dim(self) -> int:
         return self.code_dim * self.latent_len

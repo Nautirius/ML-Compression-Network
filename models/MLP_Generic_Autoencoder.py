@@ -1,4 +1,6 @@
+import torch
 import torch.nn as nn
+import numpy as np
 from models.Compressor import Compressor
 
 
@@ -30,11 +32,44 @@ class MLP_Generic_Autoencoder(nn.Module, Compressor):
         z = self.encoder(x)
         return self.decoder(z)
 
-    def compress(self, x):
-        return self.encoder(x)
+    @torch.no_grad()
+    def compress(self, x: torch.Tensor) -> np.ndarray:
+        """
+        Zwraca zakodowaną reprezentację jako numpy array
+        o długości self.layer_dims[-1] (domyślnie 16).
+        """
+        self.eval()                            # wyłącz dropout/batchnorm itp.
+        z = self.encoder(x)
+        return z.detach().cpu().numpy()        # (N, latent_dim) lub (latent_dim,)
 
-    def decompress(self, code):
-        return self.decoder(code)
+    @torch.no_grad()
+    def decompress(self, code: np.ndarray) -> np.ndarray:
+        """
+        Przyjmuje wyłącznie NumPy array i zwraca zrekonstruowany
+        NumPy array o rozmiarze `self.layer_dims[0]`.
+
+        Parameters
+        ----------
+        code : np.ndarray
+            Koder latentny o kształcie (..., latent_dim).
+
+        Returns
+        -------
+        np.ndarray
+            Zrekonstruowane dane w formacie NumPy.
+        """
+        if not isinstance(code, np.ndarray):
+            raise TypeError(
+                "decompress przyjmuje tylko np.ndarray – podaj array, a nie tensor."
+            )
+
+        self.eval()                                           # tryb ewaluacji
+        device = next(self.parameters()).device
+        dtype  = next(self.parameters()).dtype
+
+        code_t = torch.from_numpy(code).to(device=device, dtype=dtype)
+        x_hat  = self.decoder(code_t)                         # (N, input_dim)
+        return x_hat.cpu().numpy()
 
     def __str__(self):
         return f"MLP_Generic_Autoencoder {self.layer_dims}"

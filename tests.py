@@ -112,33 +112,25 @@ def train_autoencoder(
 ###############################################################################
 
 def evaluate_autoencoder(
-        net: "MLP_Generic_Autoencoder",
-        test_loader: torch.utils.data.DataLoader,
-        *,
-        training_time_s: Optional[float] = None,
-        root_out: str = "tests",
-        save_json: bool = True,
+    net: "MLP_Generic_Autoencoder",
+    test_loader: torch.utils.data.DataLoader,
+    *,
+    training_time_s: Optional[float] = None,
+    root_out: str = "tests",
+    save_json: bool = True,
+    save_plot: bool = True,                   # <── NOWA FLAGA
 ) -> dict[str, float]:
-    """Compute a rich set of metrics on *net* using *test_loader*.
-
-    If *training_time_s* (in seconds) is provided, it will be added to the
-    output metrics.
-
-    Metrics returned (and optionally saved to JSON):
-
-    * **MSE**, **MAE**, **R2**, **PSNR_dB**
-    * **compression_ratio**
-    * **compress_time_ms**, **decompress_time_ms**
-    * **MSE_per_CR**, **R2_per_CR**
-    * **training_time_s** (jeśli przekazano)
+    """
+    Oblicza metryki rekonstrukcji i – opcjonalnie – zapisuje:
+      • metrics.json   (jak dotychczas)
+      • reconstruction.png  – wykres 1-szej serii oryginalnej vs zrekonstruowanej
     """
 
     device = next(net.parameters()).device
     net.eval()
 
-    # ---------- pass 1: compute dataset mean (needed for R2) ----------
-    total_elems = 0
-    mean_acc = 0.0
+    # ---------- pass 1: średnia zbioru (do R²) ----------
+    total_elems, mean_acc = 0, 0.0
     with torch.no_grad():
         for (x,) in test_loader:
             x = x.to(device)
@@ -146,75 +138,82 @@ def evaluate_autoencoder(
             mean_acc += x.sum().item()
     dataset_mean = mean_acc / total_elems
 
-    # ---------- pass 2: metrics, timing ----------
-    sq_error_sum = 0.0
-    abs_error_sum = 0.0
-    sq_total_sum = 0.0
-    comp_times: list[float] = []
-    decomp_times: list[float] = []
+    # ---------- pass 2: metryki + chwytamy pierwszą próbkę ----------
+    sq_error_sum = abs_error_sum = sq_total_sum = 0.0
+    comp_times, decomp_times = [], []
+    first_orig, first_recon = None, None      # ← do wykresu
 
     with torch.no_grad():
         for (x,) in test_loader:
             x = x.to(device)
 
-            # timing compression
+            # pomiar – kompresja
             t0 = time.perf_counter()
             z = net.compress(x)
             comp_times.append(time.perf_counter() - t0)
 
-            # timing decompression
+            # pomiar – dekompresja
             t0 = time.perf_counter()
             recon = net.decompress(z)
             decomp_times.append(time.perf_counter() - t0)
 
-            sq_error_sum += ((recon - x) ** 2).sum().item()
-            abs_error_sum += (recon - x).abs().sum().item()
+            # --------------- konwersja typów do obliczeń ---------------
+            recon_t = torch.from_numpy(recon).to(device=device, dtype=x.dtype)
+
+            sq_error_sum += ((recon_t - x) ** 2).sum().item()
+            abs_error_sum += (recon_t - x).abs().sum().item()
             sq_total_sum += ((x - dataset_mean) ** 2).sum().item()
 
-    mse = sq_error_sum / total_elems
-    r2 = 1.0 - sq_error_sum / sq_total_sum if sq_total_sum != 0 else float("nan")
-    mae = abs_error_sum / total_elems
+            # zapamiętujemy pierwszą serię do wykresu
+            if first_orig is None:
+                # x może mieć kształt (C, L) lub (L) – spłaszczamy do ( L )
+                first_orig = x[0].detach().cpu().numpy().reshape(-1)
+                first_recon = recon[0].reshape(-1)
 
-    # Compression ratio based on architecture dims ----------------------
+    # ------------------------- metryki -------------------------
+    mse = sq_error_sum / total_elems
+    mae = abs_error_sum / total_elems
+    r2  = 1.0 - sq_error_sum / sq_total_sum if sq_total_sum else float("nan")
+    psnr = 20 * math.log10(1.0) - 10 * math.log10(mse) if mse > 0 else float("inf")
+
+    # CR działa dla MLP – jeśli sieć ma inną strukturę, dostosuj
     compression_ratio = net.layer_dims[0] / net.layer_dims[-1]
 
-    # Timing (ms averaged per batch) ------------------------------------
-    compress_time_ms = stats.mean(comp_times) * 1000 if comp_times else 0.0
-    decompress_time_ms = stats.mean(decomp_times) * 1000 if decomp_times else 0.0
-
-    # Derived metrics ----------------------------------------------------
-    mse_per_cr = mse / compression_ratio
-    r2_per_cr = r2 / compression_ratio if compression_ratio != 0 else float("nan")
-
-    # Extra metric: PSNR --------------------------------------------------
-    max_val = 1.0  # assume normalized inputs; adjust if needed
-    psnr = 20 * math.log10(max_val) - 10 * math.log10(mse) if mse > 0 else float("inf")
-
-    metrics: dict[str, float] = {
+    metrics = {
         "MSE": mse,
         "MAE": mae,
         "R2": r2,
         "PSNR_dB": psnr,
         "compression_ratio": compression_ratio,
-        "compress_time_ms": compress_time_ms,
-        "decompress_time_ms": decompress_time_ms,
-        "MSE_per_CR": mse_per_cr,
-        "R2_per_CR": r2_per_cr,
+        "compress_time_ms": stats.mean(comp_times) * 1e3,
+        "decompress_time_ms": stats.mean(decomp_times) * 1e3,
+        "MSE_per_CR": mse / compression_ratio,
+        "R2_per_CR": r2 / compression_ratio,
     }
-
     if training_time_s is not None:
         metrics["training_time_s"] = training_time_s
 
-    # Save to JSON -------------------------------------------------------
+    # ----------------------- zapisywanie -----------------------
+    model_dir = os.path.join(root_out, str(net))
+    os.makedirs(model_dir, exist_ok=True)
+
     if save_json:
-        os.makedirs(root_out, exist_ok=True)
-        model_dir = os.path.join(root_out, str(net))
-        os.makedirs(model_dir, exist_ok=True)
-        json_path = os.path.join(model_dir, "metrics.json")
-        with open(json_path, "w", encoding="utf-8") as fp:
+        with open(os.path.join(model_dir, "metrics.json"), "w", encoding="utf-8") as fp:
             json.dump(metrics, fp, indent=2, ensure_ascii=False)
 
-    # Pretty print -------------------------------------------------------
+    if save_plot and first_orig is not None:
+        fig, ax = plt.subplots(figsize=(8, 4))
+        ax.plot(first_orig, label="oryginał")
+        ax.plot(first_recon, label="rekonstrukcja")
+        ax.set_title("Rekonstrukcja – pierwsza próbka")
+        ax.legend()
+        ax.set_xlabel("indeks próbki")
+        ax.set_ylabel("wartość")
+        fig.tight_layout()
+        fig.savefig(os.path.join(model_dir, "reconstruction.png"), dpi=150)
+        plt.close(fig)
+
+    # ------------------- ładny print w konsoli ------------------
     print("\n----- Evaluation metrics -----")
     for k, v in metrics.items():
         print(f"{k:18s}: {v: .6f}")
@@ -224,61 +223,8 @@ def evaluate_autoencoder(
 
 def run():
     models_to_train = [
-        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=1),
-        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=1, code_dim=8),
-        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=7, stride=1),
-        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=7, stride=1, code_dim=8),
-        Conv1d_Strided_Autoencoder(activation="relu", kernel_size=3, stride=1),
-        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=1, conv_channels = (32, 64, 128, 256, 512), code_dim=16),
-        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=1, conv_channels=(16, 32, 64, 128, 256, 512), code_dim=8),
-        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=1, conv_channels=[64]),
-        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=1, code_dim=8, conv_channels=[64]),
-        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=1, conv_channels=[128, 64]),
-        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=1, code_dim=8, conv_channels=[128, 64]),
-        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=1, conv_channels=[512, 256, 128, 64, 32]),
-        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=1, conv_channels=[512, 256, 128, 64, 32, 16], code_dim=8),
-        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=2),
-        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=7, stride=2),
-        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=2, code_dim=8),
-        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=7, stride=2, code_dim=8),
-        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=3),
-        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=7, stride=3),
-        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=3, code_dim=8),
-        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=7, stride=3, code_dim=8),
-
-        # Conv1d_Generic_Autoencoder_Pool(
-        #     input_length=187,
-        #     conv_channels=[32, 64, 128],
-        #     kernel_size=3,
-        #     pool=2,
-        #     code_dim=32,  # mocna kompresja
-        #     activation='leaky_relu'
-        # )
-        MLP_Generic_Autoencoder([187, 180, 160, 150, 140, 128, 112, 100, 96, 80, 64, 48, 32, 28, 24, 16]),
-        MLP_Generic_Autoencoder([187, 64, 16]),
-        MLP_Generic_Autoencoder([187, 64, 8]),
-        MLP_Generic_Autoencoder([187, 8]),
-        MLP_Generic_Autoencoder([187, 16]),
-        MLP_Generic_Autoencoder([187, 64, 32]),
-        MLP_Generic_Autoencoder([187, 180, 160, 150, 140, 128, 112, 100, 96, 80, 64, 48, 32]),
-
-        MLP_Generic_Autoencoder([187, 128, 64, 32, 16, 8]),
-        MLP_Generic_Autoencoder([187, 128, 64, 32, 16]),
-        MLP_Generic_Autoencoder([187, 512, 256, 128, 64, 32, 16, 8]),
-        MLP_Generic_Autoencoder([187, 512, 256, 128, 64, 32, 16]),
-        MLP_Generic_Autoencoder([187, 128, 32, 8]),
-
-        MLP_Generic_Dropout_Norm([187, 128, 64, 32, 16, 8], dropout=0.1, batchnorm=True),
-        MLP_Generic_Dropout_Norm([187, 128, 64, 32, 16], dropout=0.1, batchnorm=True),
-        MLP_Generic_Dropout_Norm([187, 512, 256, 128, 64, 32, 16, 8], dropout=0.1, batchnorm=True),
-        MLP_Generic_Dropout_Norm([187, 512, 256, 128, 64, 32, 16], dropout=0.1, batchnorm=True),
-        MLP_Generic_Dropout_Norm([187, 128, 32, 8], dropout=0.1, batchnorm=True),
-
-        MLP_Generic_Dropout_Norm([187, 128, 64, 32, 16, 8], dropout=0.0, batchnorm=True),
-        MLP_Generic_Dropout_Norm([187, 128, 64, 32, 16], dropout=0.0, batchnorm=True),
-        MLP_Generic_Dropout_Norm([187, 512, 256, 128, 64, 32, 16, 8], dropout=0.0, batchnorm=True),
-        MLP_Generic_Dropout_Norm([187, 512, 256, 128, 64, 32, 16], dropout=0, batchnorm=True),
-        MLP_Generic_Dropout_Norm([187, 128, 32, 8], dropout=0, batchnorm=True),
+        MLP_Generic_Autoencoder(layer_dims=[187, 80, 32]),
+        Conv1d_Generic_Autoencoder(latent_dim=32, conv_channels=[64, 128]),
     ]
 
     df_train = load_and_preprocess_data('./data/mitbih_train.csv')
@@ -288,7 +234,7 @@ def run():
     loader_test = pandas_to_loader(df_test)
 
     for model in models_to_train:
-        training_time = train_autoencoder(model, loader_train, loader_test, epochs=15)
+        training_time = train_autoencoder(model, loader_train, loader_test, epochs=15, lr=5e-4)
         evaluate_autoencoder(model, loader_test, training_time_s=training_time)
 
 
