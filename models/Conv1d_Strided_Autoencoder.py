@@ -131,7 +131,7 @@ class Conv1d_Strided_Autoencoder(nn.Module, Compressor):
         return z
 
     def decompress(self, code: torch.Tensor) -> torch.Tensor:
-        code = code.double()  # <- konwersja z float16 do double
+        # code = code.double()  # <- konwersja z float16 do double
         code = code.view(-1, self.code_dim, self.latent_len)
         recon = self.decoder(self.from_latent(code))
         return recon[:, :, :self.input_length].squeeze(1)
