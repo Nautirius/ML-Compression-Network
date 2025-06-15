@@ -235,8 +235,8 @@ def evaluate_autoencoder(
 
 def run():
     models_to_train = [
-        models.Conv1d_Strided_Autoencoder_V2.Conv1d_Strided_Autoencoder(stride=1, kernel_size=3),
-        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3),
+        models.Conv1d_Strided_Autoencoder_V2.Conv1d_Strided_Autoencoder_V2(stride=2, kernel_size=3),
+        # Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3),
         # Conv1d_Generic_Autoencoder(activation="gelu", kernel_size=5),
         # Conv1d_Generic_Autoencoder_Pool(
         #     input_length=187,
