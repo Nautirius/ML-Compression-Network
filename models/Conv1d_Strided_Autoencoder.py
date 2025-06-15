@@ -128,10 +128,10 @@ class Conv1d_Strided_Autoencoder(nn.Module, Compressor):
             x = x.unsqueeze(1)
         z = self.to_latent(self.encoder(x))
         z = z.view(z.size(0), -1)  # [B, code_dim * latent_len]
-        return z.half()  # <= zmniejszenie precyzji do float16
+        return z
 
     def decompress(self, code: torch.Tensor) -> torch.Tensor:
-        code = code.float()  # <- konwersja z float16 do float32
+        code = code.double()  # <- konwersja z float16 do double
         code = code.view(-1, self.code_dim, self.latent_len)
         recon = self.decoder(self.from_latent(code))
         return recon[:, :, :self.input_length].squeeze(1)
@@ -140,4 +140,4 @@ class Conv1d_Strided_Autoencoder(nn.Module, Compressor):
         return self.code_dim * self.latent_len
 
     def __str__(self) -> str:
-        return f"{self.__class__.__name__}_{[1,*self.conv_channels,1]}_s{self.stride}_code{self.code_dim}"
+        return f"{self.__class__.__name__}_{[1,*self.conv_channels,1]}_stride{self.stride}_codeDim{self.code_dim}_activation_{self.activation_name}_kernel{self.kernel_size}_stride{self.kernel_size}"

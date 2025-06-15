@@ -15,14 +15,14 @@ class MLP_Generic_Autoencoder(nn.Module, Compressor):
         encoder_layers = []
         for in_dim, out_dim in zip(layer_dims[:-1], layer_dims[1:]):
             encoder_layers.append(nn.Linear(in_dim, out_dim))
-            encoder_layers.append(nn.ReLU())
+            encoder_layers.append(nn.GELU())
         encoder_layers.pop()
         self.encoder = nn.Sequential(*encoder_layers)
 
         decoder_layers = []
         for in_dim, out_dim in zip(layer_dims[::-1][:-1], layer_dims[::-1][1:]):
             decoder_layers.append(nn.Linear(in_dim, out_dim))
-            decoder_layers.append(nn.ReLU())
+            decoder_layers.append(nn.GELU())
         decoder_layers.pop()
         self.decoder = nn.Sequential(*decoder_layers)
 
