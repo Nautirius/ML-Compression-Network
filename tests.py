@@ -23,10 +23,9 @@ def train_autoencoder(
         test_loader: torch.utils.data.DataLoader,
         *,
         epochs: int = 10,
-        lr: float = 1e-3,
+        lr: float = 1e-4,
         root_out: str = "tests",
-        allow_non_monotonic: bool = False,
-        max_extra_epochs: int | None = 4,
+        expected_train_MSE: float = 1e-7
 ) -> float:
     """Train *net* until MSE nie wzrośnie względem poprzedniego kroku.
 
@@ -42,6 +41,7 @@ def train_autoencoder(
     """
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"using {device}")
     net.to(device)
 
     optimizer = optim.Adam(net.parameters(), lr=lr)
@@ -55,11 +55,9 @@ def train_autoencoder(
     test_losses: list[float] = []
     pure_train_time = 0.0  # seconds
 
-    best_train_loss: Optional[float] = None
-    extra_epochs_run = 0
     epoch = 0
 
-    while epoch < epochs or (best_train_loss is not None and train_losses[-1] > best_train_loss):
+    while epoch < epochs:
         epoch += 1
         # ------------------------- train -------------------------
         net.train()
@@ -76,18 +74,6 @@ def train_autoencoder(
         epoch_train = running_train / len(train_loader)
         train_losses.append(epoch_train)
 
-        if best_train_loss is None or epoch_train < best_train_loss:
-            best_train_loss = epoch_train
-        else:
-            extra_epochs_run += 1
-            # If user allows non monotonic, break early
-            if allow_non_monotonic:
-                break
-            # Respect max_extra_epochs if set
-            if max_extra_epochs is not None and extra_epochs_run > max_extra_epochs:
-                print("Reached max_extra_epochs without improvement; stopping.")
-                break
-
         # ------------------------- test -------------------------
         net.eval()
         running_test = 0.0
@@ -100,6 +86,9 @@ def train_autoencoder(
         print(
             f"Epoch {epoch:3d} | train MSE: {epoch_train:.6f} | test MSE: {test_losses[-1]:.6f}"
         )
+
+        if expected_train_MSE >= epoch_train:
+            break
 
     # -------------------- plot curves ---------------------------
     plt.figure()
@@ -235,8 +224,7 @@ def evaluate_autoencoder(
 
 def run():
     models_to_train = [
-        models.Conv1d_Strided_Autoencoder_V2.Conv1d_Strided_Autoencoder_V2(stride=2, kernel_size=3),
-        # Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3),
+        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=1),
         # Conv1d_Generic_Autoencoder(activation="gelu", kernel_size=5),
         # Conv1d_Generic_Autoencoder_Pool(
         #     input_length=187,
@@ -279,7 +267,7 @@ def run():
     loader_test = pandas_to_loader(df_test)
 
     for model in models_to_train:
-        training_time = train_autoencoder(model, loader_train, loader_test, epochs=6)
+        training_time = train_autoencoder(model, loader_train, loader_test, epochs=15, lr=5e-5)
         evaluate_autoencoder(model, loader_test, training_time_s=training_time)
 
 
