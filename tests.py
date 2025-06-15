@@ -11,7 +11,7 @@ from typing import Optional
 
 import models.Conv1d_Strided_Autoencoder_V2
 from data_utils.data_utils import load_and_preprocess_data, pandas_to_loader
-from models.Conv1d_Generic_Autoencoder_Pool import Conv1d_Generic_Autoencoder_Pool
+from models.MLP_Generic_Dropout_Norm import MLP_Generic_Dropout_Norm
 from models.MLP_Generic_Autoencoder import MLP_Generic_Autoencoder
 from models.Conv1d_Generic_Autoencoder import Conv1d_Generic_Autoencoder
 from models.Conv1d_Strided_Autoencoder import Conv1d_Strided_Autoencoder
@@ -226,9 +226,25 @@ def run():
     models_to_train = [
         Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=1),
         Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=1, code_dim=8),
+        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=7, stride=1),
+        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=7, stride=1, code_dim=8),
+        Conv1d_Strided_Autoencoder(activation="relu", kernel_size=3, stride=1),
         Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=1, conv_channels = (32, 64, 128, 256, 512), code_dim=16),
-        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=1, code_dim=16, conv_channels=(48, 128)),
+        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=1, conv_channels=(16, 32, 64, 128, 256, 512), code_dim=8),
+        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=1, conv_channels=[64]),
+        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=1, code_dim=8, conv_channels=[64]),
+        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=1, conv_channels=[128, 64]),
+        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=1, code_dim=8, conv_channels=[128, 64]),
+        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=1, conv_channels=[512, 256, 128, 64, 32]),
+        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=1, conv_channels=[512, 256, 128, 64, 32, 16], code_dim=8),
         Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=2),
+        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=7, stride=2),
+        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=2, code_dim=8),
+        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=7, stride=2, code_dim=8),
+        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=3),
+        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=7, stride=3),
+        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=3, stride=3, code_dim=8),
+        Conv1d_Strided_Autoencoder(activation="gelu", kernel_size=7, stride=3, code_dim=8),
 
         # Conv1d_Generic_Autoencoder_Pool(
         #     input_length=187,
@@ -238,30 +254,31 @@ def run():
         #     code_dim=32,  # mocna kompresja
         #     activation='leaky_relu'
         # )
-        # MLP_Generic_Autoencoder([187, 180, 160, 150, 140, 128, 112, 100, 96, 80, 64, 48, 32, 28, 24, 16])
-
+        MLP_Generic_Autoencoder([187, 180, 160, 150, 140, 128, 112, 100, 96, 80, 64, 48, 32, 28, 24, 16]),
         MLP_Generic_Autoencoder([187, 64, 16]),
         MLP_Generic_Autoencoder([187, 64, 8]),
-        # MLP_Generic_Autoencoder([187, 64, 32]),
-        # MLP_Generic_Autoencoder([187, 180, 160, 150, 140, 128, 112, 100, 96, 80, 64, 48, 32])
-        #
-        # MLP_Generic_Autoencoder([187, 128, 64, 32, 16, 8]),
-        # MLP_Generic_Autoencoder([187, 128, 64, 32, 16]),
-        # MLP_Generic_Autoencoder([187, 512, 256, 128, 64, 32, 16, 8]),
-        # MLP_Generic_Autoencoder([187, 512, 256, 128, 64, 32, 16]),
-        # MLP_Generic_Autoencoder([187, 128, 32, 8]),
-        #
-        # MLP_Generic_Dropout_Norm([187, 128, 64, 32, 16, 8], dropout=0.1, batchnorm=True),
-        # MLP_Generic_Dropout_Norm([187, 128, 64, 32, 16], dropout=0.1, batchnorm=True),
-        # MLP_Generic_Dropout_Norm([187, 512, 256, 128, 64, 32, 16, 8], dropout=0.1, batchnorm=True),
-        # MLP_Generic_Dropout_Norm([187, 512, 256, 128, 64, 32, 16], dropout=0.1, batchnorm=True),
-        # MLP_Generic_Dropout_Norm([187, 128, 32, 8], dropout=0.1, batchnorm=True),
-        #
-        # MLP_Generic_Dropout_Norm([187, 128, 64, 32, 16, 8], dropout=0.0, batchnorm=True),
-        # MLP_Generic_Dropout_Norm([187, 128, 64, 32, 16], dropout=0.0, batchnorm=True),
-        # MLP_Generic_Dropout_Norm([187, 512, 256, 128, 64, 32, 16, 8], dropout=0.0, batchnorm=True),
-        # MLP_Generic_Dropout_Norm([187, 512, 256, 128, 64, 32, 16], dropout=0, batchnorm=True),
-        # MLP_Generic_Dropout_Norm([187, 128, 32, 8], dropout=0, batchnorm=True),
+        MLP_Generic_Autoencoder([187, 8]),
+        MLP_Generic_Autoencoder([187, 16]),
+        MLP_Generic_Autoencoder([187, 64, 32]),
+        MLP_Generic_Autoencoder([187, 180, 160, 150, 140, 128, 112, 100, 96, 80, 64, 48, 32]),
+
+        MLP_Generic_Autoencoder([187, 128, 64, 32, 16, 8]),
+        MLP_Generic_Autoencoder([187, 128, 64, 32, 16]),
+        MLP_Generic_Autoencoder([187, 512, 256, 128, 64, 32, 16, 8]),
+        MLP_Generic_Autoencoder([187, 512, 256, 128, 64, 32, 16]),
+        MLP_Generic_Autoencoder([187, 128, 32, 8]),
+
+        MLP_Generic_Dropout_Norm([187, 128, 64, 32, 16, 8], dropout=0.1, batchnorm=True),
+        MLP_Generic_Dropout_Norm([187, 128, 64, 32, 16], dropout=0.1, batchnorm=True),
+        MLP_Generic_Dropout_Norm([187, 512, 256, 128, 64, 32, 16, 8], dropout=0.1, batchnorm=True),
+        MLP_Generic_Dropout_Norm([187, 512, 256, 128, 64, 32, 16], dropout=0.1, batchnorm=True),
+        MLP_Generic_Dropout_Norm([187, 128, 32, 8], dropout=0.1, batchnorm=True),
+
+        MLP_Generic_Dropout_Norm([187, 128, 64, 32, 16, 8], dropout=0.0, batchnorm=True),
+        MLP_Generic_Dropout_Norm([187, 128, 64, 32, 16], dropout=0.0, batchnorm=True),
+        MLP_Generic_Dropout_Norm([187, 512, 256, 128, 64, 32, 16, 8], dropout=0.0, batchnorm=True),
+        MLP_Generic_Dropout_Norm([187, 512, 256, 128, 64, 32, 16], dropout=0, batchnorm=True),
+        MLP_Generic_Dropout_Norm([187, 128, 32, 8], dropout=0, batchnorm=True),
     ]
 
     df_train = load_and_preprocess_data('./data/mitbih_train.csv')
@@ -271,7 +288,7 @@ def run():
     loader_test = pandas_to_loader(df_test)
 
     for model in models_to_train:
-        training_time = train_autoencoder(model, loader_train, loader_test, epochs=10)
+        training_time = train_autoencoder(model, loader_train, loader_test, epochs=15)
         evaluate_autoencoder(model, loader_test, training_time_s=training_time)
 
 
