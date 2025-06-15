@@ -38,7 +38,7 @@ class Conv1d_Strided_Autoencoder(nn.Module, Compressor):
         code_dim: int = 16,
         kernel_size: int = 3,
         activation: str = "gelu",
-        stride: int = 1,
+        stride: int = 2,
     ) -> None:
         super().__init__()
         if stride < 1:
@@ -99,21 +99,45 @@ class Conv1d_Strided_Autoencoder(nn.Module, Compressor):
         self.layer_dims = [input_length] + self.conv_channels + [code_dim]
 
     # ------------------------------------------------------------------
-    def forward(self, x: torch.Tensor) -> torch.Tensor:  # type: ignore[override]
+    # def forward(self, x: torch.Tensor) -> torch.Tensor:  # type: ignore[override]
+    #     if x.ndim == 2:
+    #         x = x.unsqueeze(1)
+    #     z = self.to_latent(self.encoder(x))
+    #     recon = self.decoder(self.from_latent(z))
+    #     return recon[:, :, : self.input_length].squeeze(1)
+    #
+    # def compress(self, x: torch.Tensor) -> torch.Tensor:
+    #     if x.ndim == 2:
+    #         x = x.unsqueeze(1)
+    #     return self.to_latent(self.encoder(x))
+    #     # return self.encoder(x)
+    #
+    # def decompress(self, code: torch.Tensor) -> torch.Tensor:
+    #     recon = self.decoder(self.from_latent(code))
+    #     return recon[:, :, : self.input_length].squeeze(1)
+    #     # return self.decoder(code)
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         if x.ndim == 2:
             x = x.unsqueeze(1)
         z = self.to_latent(self.encoder(x))
         recon = self.decoder(self.from_latent(z))
-        return recon[:, :, : self.input_length].squeeze(1)
+        return recon[:, :, :self.input_length].squeeze(1)
 
     def compress(self, x: torch.Tensor) -> torch.Tensor:
         if x.ndim == 2:
             x = x.unsqueeze(1)
-        return self.to_latent(self.encoder(x))
+        z = self.to_latent(self.encoder(x))
+        z = z.view(z.size(0), -1)  # [B, code_dim * latent_len]
+        return z.half()  # <= zmniejszenie precyzji do float16
 
     def decompress(self, code: torch.Tensor) -> torch.Tensor:
+        code = code.float()  # <- konwersja z float16 do float32
+        code = code.view(-1, self.code_dim, self.latent_len)
         recon = self.decoder(self.from_latent(code))
-        return recon[:, :, : self.input_length].squeeze(1)
+        return recon[:, :, :self.input_length].squeeze(1)
+
+    def compressed_dim(self) -> int:
+        return self.code_dim * self.latent_len
 
     def __str__(self) -> str:
         return f"{self.__class__.__name__}_{[1,*self.conv_channels,1]}_s{self.stride}_code{self.code_dim}"
