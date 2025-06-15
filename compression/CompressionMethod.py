@@ -6,6 +6,8 @@ class CompressionMethod(str, Enum):
     MLP_EA = 'expanded_autoencoder'
     MLP_EA_2 = 'expanded_autoencoder_2'
     MLP_SA = 'simple_autoencoder'
+    MLP_GENERIC = 'generic_autoencoder'
+    CONV1D_STRIDED = 'conv1d_strided_autoencoder'
 
     @property
     def extension(self) -> str:
@@ -13,7 +15,9 @@ class CompressionMethod(str, Enum):
             CompressionMethod.CONV1D: '.conv1d_autoencoder',
             CompressionMethod.MLP_EA: '.expanded_autoencoder',
             CompressionMethod.MLP_EA_2: '.expanded_autoencoder_2',
-            CompressionMethod.MLP_SA: '.simple_autoencoder'
+            CompressionMethod.MLP_SA: '.simple_autoencoder',
+            CompressionMethod.MLP_GENERIC: '.generic_autoencoder',
+            CompressionMethod.CONV1D_STRIDED: '.conv1d_strided_autoencoder'
         }[self]
 
     @staticmethod

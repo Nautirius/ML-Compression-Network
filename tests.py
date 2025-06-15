@@ -18,15 +18,15 @@ from models.Conv1d_Strided_Autoencoder import Conv1d_Strided_Autoencoder
 
 
 def train_autoencoder(
-    net: nn.Module,
-    train_loader: torch.utils.data.DataLoader,
-    test_loader: torch.utils.data.DataLoader,
-    *,
-    epochs: int = 10,
-    lr: float = 1e-3,
-    root_out: str = "tests",
-    allow_non_monotonic: bool = False,
-    max_extra_epochs: int | None = 4,
+        net: nn.Module,
+        train_loader: torch.utils.data.DataLoader,
+        test_loader: torch.utils.data.DataLoader,
+        *,
+        epochs: int = 10,
+        lr: float = 1e-3,
+        root_out: str = "tests",
+        allow_non_monotonic: bool = False,
+        max_extra_epochs: int | None = 4,
 ) -> float:
     """Train *net* until MSE nie wzrośnie względem poprzedniego kroku.
 
@@ -123,12 +123,12 @@ def train_autoencoder(
 ###############################################################################
 
 def evaluate_autoencoder(
-    net: "MLP_Generic_Autoencoder",
-    test_loader: torch.utils.data.DataLoader,
-    *,
-    training_time_s: Optional[float] = None,
-    root_out: str = "tests",
-    save_json: bool = True,
+        net: "MLP_Generic_Autoencoder",
+        test_loader: torch.utils.data.DataLoader,
+        *,
+        training_time_s: Optional[float] = None,
+        root_out: str = "tests",
+        save_json: bool = True,
 ) -> dict[str, float]:
     """Compute a rich set of metrics on *net* using *test_loader*.
 
@@ -280,7 +280,7 @@ def run():
 
     for model in models_to_train:
         training_time = train_autoencoder(model, loader_train, loader_test, epochs=6)
-        evaluate_autoencoder(model, loader_test, training_time_s =training_time)
+        evaluate_autoencoder(model, loader_test, training_time_s=training_time)
 
 
 if __name__ == '__main__':

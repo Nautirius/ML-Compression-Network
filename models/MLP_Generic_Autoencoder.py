@@ -3,7 +3,8 @@ from models.Compressor import Compressor
 
 
 class MLP_Generic_Autoencoder(nn.Module, Compressor):
-    def __init__(self, layer_dims: list[int]):
+    def __init__(self, layer_dims: list[int] = [187, 64, 16]
+                 ):
         """
         Tworzy autoenkoder z zadanej listy wymiarów, np. [187, 128, 64, 16]
         """
