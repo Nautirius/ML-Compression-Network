@@ -1,5 +1,4 @@
 import json
-import math
 import os
 import statistics as stats
 import time
@@ -91,7 +90,7 @@ def train_autoencoder(
         if expected_train_MSE >= epoch_train:
             break
 
-    # -------------------- plot curves ---------------------------
+    # -------------------- wykresy ---------------------------
     plt.figure()
     ep_range = range(1, len(train_losses) + 1)
     plt.plot(ep_range, train_losses, marker="o", label="train")
@@ -100,7 +99,7 @@ def train_autoencoder(
     plt.xlabel("Epoch")
     plt.ylabel("MSE loss")
     plt.yscale("log")
-    plt.grid(True)
+    plt.grid()
     plt.legend()
     plt.tight_layout()
     plt.savefig(os.path.join(model_dir, "loss.png"))
@@ -109,33 +108,27 @@ def train_autoencoder(
     return pure_train_time
 
 
-###############################################################################
-# Evaluation helper                                                           #
-###############################################################################
-
 def evaluate_autoencoder(
-    net: Union["MLP_Generic_Autoencoder", "Conv1d_Generic_Autoencoder"],
-    test_loader: torch.utils.data.DataLoader,
-    *,
-    training_time_s: Optional[float] = None,
-    root_out: str = "tests",
-    save_json: bool = True,
-    save_plot: bool = True,
+        net: Union["MLP_Generic_Autoencoder", "Conv1d_Generic_Autoencoder"],
+        test_loader: torch.utils.data.DataLoader,
+        *,
+        training_time_s: Optional[float] = None,
+        root_out: str = "tests",
+        save_json: bool = True,
+        save_plot: bool = True,
 ) -> dict[str, float]:
     """
-    Oblicza metryki rekonstrukcji i – opcjonalnie – zapisuje:
-      • metrics.json   (jak dotychczas)
-      • reconstruction.png  – wykres 1-szej serii oryginalnej vs zrekonstruowanej
+    Oblicza metryki rekonstrukcji i opcjonalnie zapisuje:
+      - metrics.json
+      - reconstruction.png - wykres pierwszej serii oryginalnej vs zrekonstruowanej
     """
 
     device = next(net.parameters()).device
     net.eval()
 
-    # -----------------------------------------------------------
-    #  Pętla po zbiorze testowym – jedyny przebieg
-    # -----------------------------------------------------------
+    # ----------------------- pętla po zbiorze testowym -----------------------
     comp_times, decomp_times = [], []
-    y_true, y_pred = [], []          # ← przechowujemy do obliczeń metryk
+    y_true, y_pred = [], []  # do obliczeń metryk
     first_orig, first_recon = None, None
 
     with torch.no_grad():
@@ -156,25 +149,23 @@ def evaluate_autoencoder(
             y_true.append(x.detach().cpu().numpy().reshape(-1))
             y_pred.append(recon.detach().cpu().numpy().reshape(-1))
 
-            # zapamiętujemy pierwszą serię do wykresu
+            # zapis pierwszej serii do wykresu
             if first_orig is None:
                 first_orig = y_true[-1]
                 first_recon = y_pred[-1]
 
-    # -----------------------------------------------------------
-    #  Obliczenie metryk za pomocą gotowych bibliotek
-    # -----------------------------------------------------------
+    # ----------------------- obliczenie metryk -----------------------
     y_true = np.concatenate(y_true)
     y_pred = np.concatenate(y_pred)
 
-    mse  = mean_squared_error(y_true, y_pred)
-    mae  = mean_absolute_error(y_true, y_pred)
-    r2   = r2_score(y_true, y_pred)
+    mse = mean_squared_error(y_true, y_pred)
+    mae = mean_absolute_error(y_true, y_pred)
+    r2 = r2_score(y_true, y_pred)
     psnr = peak_signal_noise_ratio(
         torch.tensor(y_pred), torch.tensor(y_true), data_range=1.0
     ).item()
 
-    # CR działa dla MLP – jeśli sieć ma inną strukturę, dostosuj
+    # CR działa dla MLP - jeśli sieć ma inną strukturę, dostosuj
     compression_ratio = net.layer_dims[0] / net.layer_dims[-1]
 
     metrics = {

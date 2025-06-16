@@ -1,4 +1,3 @@
-
 from .Conv1d_Generic_Autoencoder import Conv1d_Generic_Autoencoder
 from .MLP_Generic_Autoencoder import MLP_Generic_Autoencoder
 

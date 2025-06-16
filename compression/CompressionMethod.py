@@ -2,25 +2,13 @@ from enum import Enum
 
 
 class CompressionMethod(str, Enum):
-    # CONV1D = 'conv1d_autoencoder'
-    # MLP_EA = 'expanded_autoencoder'
-    # MLP_EA_2 = 'expanded_autoencoder_2'
-    # MLP_SA = 'simple_autoencoder'
     MLP_GENERIC = 'generic_autoencoder'
-    # CONV1D_STRIDED = 'conv1d_strided_autoencoder'
-    # CONV1D_STRIDED_V2 = 'conv1d_strided_autoencoder_v2'
     CONV1D_GENERIC = 'conv1d_generic_autoencoder'
 
     @property
     def extension(self) -> str:
         return {
-            # CompressionMethod.CONV1D: '.conv1d_autoencoder',
-            # CompressionMethod.MLP_EA: '.expanded_autoencoder',
-            # CompressionMethod.MLP_EA_2: '.expanded_autoencoder_2',
-            # CompressionMethod.MLP_SA: '.simple_autoencoder',
             CompressionMethod.MLP_GENERIC: '.generic_autoencoder',
-            # CompressionMethod.CONV1D_STRIDED: '.conv1d_strided_autoencoder',
-            # CompressionMethod.CONV1D_STRIDED_V2: '.conv1d_strided_autoencoder_v2',
             CompressionMethod.CONV1D_GENERIC: '.conv1d_generic_autoencoder'
         }[self]
 
