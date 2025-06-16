@@ -1,9 +1,8 @@
+import numpy as np
 import pandas as pd
 import torch
-from torch.utils.data import TensorDataset, DataLoader
 from sklearn.impute import KNNImputer
-from sklearn.preprocessing import MinMaxScaler
-import numpy as np
+from torch.utils.data import TensorDataset, DataLoader
 
 
 def load_and_preprocess_data(input_path: str, cleaning_strategy: str = "knn") -> np.ndarray:
@@ -19,10 +18,10 @@ def load_and_preprocess_data(input_path: str, cleaning_strategy: str = "knn") ->
     return X_clean.to_numpy()
 
 
-def pandas_to_loader(x: np.ndarray) -> DataLoader:
+def pandas_to_loader(x: np.ndarray, shuffle: bool=True) -> DataLoader:
     X_tensor = torch.tensor(x, dtype=torch.float32)
     dataset = TensorDataset(X_tensor)
-    loader = DataLoader(dataset, batch_size=128, shuffle=True)
+    loader = DataLoader(dataset, batch_size=128, shuffle=shuffle)
     return loader
 
 

@@ -120,7 +120,7 @@ def evaluate_autoencoder(
     training_time_s: Optional[float] = None,
     root_out: str = "tests",
     save_json: bool = True,
-    save_plot: bool = True,  # <── NOWA FLAGA
+    save_plot: bool = True,
 ) -> dict[str, float]:
     """
     Oblicza metryki rekonstrukcji i – opcjonalnie – zapisuje:

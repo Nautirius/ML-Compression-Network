@@ -2,17 +2,17 @@ import os
 from pathlib import Path
 from typing import Optional
 
-import torch
-import torch.optim as optim
-import torch.nn as nn
-import pandas as pd
 import numpy as np
+import pandas as pd
+import torch
+import torch.nn as nn
+import torch.optim as optim
 from sklearn.metrics import mean_squared_error
 
+from data_utils.data_utils import load_and_preprocess_data, pandas_to_loader
 from models.models import MODELS
 from tests import save_reconstruction_plot
 from .CompressionMethod import CompressionMethod
-from data_utils.data_utils import load_and_preprocess_data, pandas_to_loader
 
 
 def compress_and_save(
@@ -40,7 +40,7 @@ def compress_and_save(
 
     # 3) Wczytaj dane i loader
     df = load_and_preprocess_data(input_path)
-    data_loader = pandas_to_loader(df)
+    data_loader = pandas_to_loader(df, shuffle=False)
     print(f"[compress_and_save] DataLoader ma {len(data_loader)} batchy")
 
     # 4) Kompresuj każdą próbkę
@@ -48,11 +48,13 @@ def compress_and_save(
     with torch.no_grad():
         for batch_idx, (x,) in enumerate(data_loader):
             x = x.to(device)
-            z = net.compress(x).cpu().numpy()        # (B, latent_dim)
+            z = net.compress(x)        # (B, latent_dim)
+            z = z.cpu().numpy()
             compressed_rows.append(z)
 
     # 5) Zapis
     compressed_mat = np.vstack(compressed_rows)      # (N, latent_dim)
+    print(compressed_mat[15])
     df_compressed = pd.DataFrame(compressed_mat)
 
     if output_path is None:
@@ -86,7 +88,7 @@ def decompress_and_save(input_path: str, output_path: Optional[str]):
         input_path,
         header=None,
     )
-    data_loader = pandas_to_loader(df.values)
+    data_loader = pandas_to_loader(df.values, shuffle=False)
     decompressed_rows = []
     with torch.no_grad():
         for batch_idx, (x,) in enumerate(data_loader):
@@ -167,9 +169,6 @@ def test_model(input_path: str, model: CompressionMethod):
 
     print(compressed_file)
     print(decompressed_file)
-
-    # print(original)
-    # print(reconstructed)
 
     mse = mean_squared_error(original, reconstructed)
 
