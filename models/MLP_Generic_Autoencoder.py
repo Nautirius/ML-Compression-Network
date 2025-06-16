@@ -1,17 +1,20 @@
 import torch
 import torch.nn as nn
-import numpy as np
 from models.Compressor import Compressor
 
 
 class MLP_Generic_Autoencoder(nn.Module, Compressor):
-    def __init__(self, layer_dims: list[int] = [187, 64, 16]
-                 ):
-        """
-        Tworzy autoenkoder z zadanej listy wymiarów, np. [187, 128, 64, 16]
-        """
+    """
+    Tworzy autoenkoder z zadanej listy wymiarów, np. [187, 128, 64, 16]
+    """
+
+    def __init__(self, layer_dims: list[int] | None = None):
         super().__init__()
+        if layer_dims is None:  # np. [187, 64, 16]
+            layer_dims = [187, 64, 16]
+
         assert len(layer_dims) >= 2, "Wymagane co najmniej dwa wymiary (wejście i wyjście)"
+
         self.layer_dims = layer_dims
 
         encoder_layers = []
@@ -42,8 +45,8 @@ class MLP_Generic_Autoencoder(nn.Module, Compressor):
     @torch.no_grad()
     def decompress(self, code: torch.Tensor) -> torch.Tensor:
         self.eval()
-        x_hat  = self.decoder(code)
+        x_hat = self.decoder(code)
         return x_hat.detach()
 
     def __str__(self):
-        return f"MLP_Generic_Autoencoder {self.layer_dims}"
+        return f"MLP_Generic_Autoencoder(layer_dims={self.layer_dims})"
