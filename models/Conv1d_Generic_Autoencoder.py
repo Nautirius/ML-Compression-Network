@@ -9,7 +9,7 @@ import torch.nn as nn
 import numpy as np
 
 
-class Conv1d_Generic_Autoencoder(nn.Module):
+class Conv1d_Generic_Autoencoder(nn.Module, Compressor):
     """
     Auto-enkoder 1-D z dowolną liczbą warstw Conv1d.
     Gwarantuje identyczną długość sekwencji przy wyjściu (brak 191 → 187).
@@ -22,7 +22,7 @@ class Conv1d_Generic_Autoencoder(nn.Module):
         input_channels: int = 1,
         conv_channels: list[int] | None = None,
         kernel_size: int = 3,
-        stride: int = 2,
+        stride: int = 1,
         latent_dim: int = 16,
     ):
         super().__init__()
@@ -97,12 +97,9 @@ class Conv1d_Generic_Autoencoder(nn.Module):
 
         self.decoder_conv = nn.Sequential(*dec_layers)
 
-    # ------------------------------------------- GŁÓWNY PRZEPŁYW ------------------------------------------- #
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        x : (N, L) lub (N, C, L)  →  out : (N, L)
-        """
-        if x.ndim == 2:                        # (N, L) → (N, 1, L)
+        if x.ndim == 2:
             x = x.unsqueeze(1)
 
         z_conv = self.encoder_conv(x)
@@ -113,39 +110,26 @@ class Conv1d_Generic_Autoencoder(nn.Module):
         y_conv = self.dec_unflatten(y_vec)
         out    = self.decoder_conv(y_conv)
 
-        return out.squeeze(1)                  # wracamy do (N, L)
+        return out.squeeze(1)
 
-    # -------------------------------------- API identyczne jak wcześniej ------------------------------------ #
+
     @torch.no_grad()
-    def compress(self, x: torch.Tensor) -> np.ndarray:
-        """
-        Tensor → NumPy (N, latent_dim)
-        """
-        self.eval()
+    def compress(self, x: torch.Tensor) -> torch.Tensor:
         if x.ndim == 2:
             x = x.unsqueeze(1)
         z_conv = self.encoder_conv(x)
         z_vec  = self.enc_flatten(z_conv)
         z      = self.encoder_fc(z_vec)
-        return z.detach().cpu().numpy()
+        return z.detach().flatten()
 
     @torch.no_grad()
-    def decompress(self, code: np.ndarray) -> np.ndarray:
-        """
-        NumPy (..., latent_dim) → NumPy (..., input_length)
-        """
-        if not isinstance(code, np.ndarray):
-            raise TypeError("decompress przyjmuje tylko np.ndarray – podaj array, a nie tensor.")
+    def decompress(self, code: torch.Tensor) -> torch.Tensor:
 
-        self.eval()
-        device = next(self.parameters()).device
-        dtype  = next(self.parameters()).dtype
-
-        code_t = torch.from_numpy(code).to(device=device, dtype=dtype)
-        y_vec  = self.decoder_fc(code_t)
+        y_vec  = self.decoder_fc(code)
         y_conv = self.dec_unflatten(y_vec)
-        out    = self.decoder_conv(y_conv).squeeze(1)
-        return out.cpu().numpy()
+        out    = self.decoder_conv(y_conv)
+        print("po dekompresji: " + str(out.flatten()))
+        return out.detach().flatten()
 
     def __str__(self):
         return (

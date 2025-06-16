@@ -41,7 +41,7 @@ def compress_cmd(filepath: str, model: str, output: Optional[str] = None):
 )
 def decompress_cmd(filepath: str, output: Optional[str]):
     """Dekompresuje plik CSV."""
-    if not any(filepath.endswith(ext) for ext in ALLOWED_EXTENSIONS):
+    if not any(filepath.endswith(f"{ext}.csv") for ext in ALLOWED_EXTENSIONS):
         raise click.ClickException(f"Plik musi mieć jedno z rozszerzeń: {', '.join(ALLOWED_EXTENSIONS)}")
 
     decompress_and_save(filepath, output)
@@ -58,7 +58,7 @@ def decompress_cmd(filepath: str, output: Optional[str]):
                 )
 def train(model: CompressionMethod, train_data_dir: str):
     """Trenuje dany Autoencoder na zbiorze danych i zapisuje."""
-    train_and_save_autoencoder(train_data_dir, model, epochs=10)
+    train_and_save_autoencoder(train_data_dir, model, epochs=15)
 
 
 @cli.command()

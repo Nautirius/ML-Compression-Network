@@ -46,10 +46,10 @@ def compress_and_save(
     compressed_rows = []
     with torch.no_grad():
         for batch_idx, (x,) in enumerate(data_loader):
+            print(x)
             x = x.to(device)
             z = net.compress(x)            # ← 1-wymiarowy np.ndarray
-            if not isinstance(z, np.ndarray):
-                z = z.cpu().numpy()        # awaryjnie zamień Tensor → NumPy
+            z = z.cpu().numpy()        # awaryjnie zamień Tensor → NumPy
             compressed_rows.append(z)
             print(z.shape)
             print(
@@ -57,9 +57,8 @@ def compress_and_save(
                 f"skompresowany (latent dim = {z.shape[0]})"
             )
 
-    # 5) Zamień listę na macierz i zapisz do CSV
-    compressed_array = np.vstack(compressed_rows)  # (N, latent_dim)
-    df_compressed = pd.DataFrame(compressed_array)
+    # 5) Zamień listę na macierz i zapisz do CSV# (N, latent_dim)
+    df_compressed = pd.DataFrame(compressed_rows)
 
     # 6) Ustal ścieżkę wyjściową
     if output_path is None:
@@ -85,19 +84,29 @@ def decompress_and_save(input_path: str, output_path: Optional[str]):
     net.load_state_dict(torch.load(model_path))
     net.eval()
 
-    compressed_df = pd.read_csv(input_path, header=None)
-    compressed_np = compressed_df.to_numpy(dtype=np.float32)  # shape: (N, latent_dim)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    net.to(device)
 
+    df = pd.read_csv(
+        input_path,
+        header=None,
+    )
+    data_loader = pandas_to_loader(df.values)
+    decompressed_rows = []
     # --- dekompresja (cała macierz naraz) ---
     with torch.no_grad():
-        decompressed_np = net.decompress(compressed_np)       # shape: (N, input_dim)
+        for batch_idx, (x,) in enumerate(data_loader):
+            x = x.to(device)
+            print("x: " + str(x))
+            decompressed = net.decompress(x)
+            decompressed_rows.append(decompressed.cpu().numpy())
 
     # --- zapis ---
     if output_path is None:
         output_path = Path(input_path).with_suffix("").with_suffix(".decompressed.csv")
     output_path = Path(output_path)
 
-    pd.DataFrame(decompressed_np).to_csv(
+    pd.DataFrame(decompressed_rows).to_csv(
         output_path,
         index=False,
         header=False,

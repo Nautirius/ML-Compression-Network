@@ -1,20 +1,18 @@
-import torch
-import torch.optim as optim
-import torch.nn as nn
-import os
-import time
 import json
 import math
+import os
 import statistics as stats
-import matplotlib.pyplot as plt
-from typing import Optional
+import time
+from typing import Optional, Union
 
-import models.Conv1d_Strided_Autoencoder_V2
+import matplotlib.pyplot as plt
+import torch
+import torch.nn as nn
+import torch.optim as optim
+
 from data_utils.data_utils import load_and_preprocess_data, pandas_to_loader
-from models.MLP_Generic_Dropout_Norm import MLP_Generic_Dropout_Norm
-from models.MLP_Generic_Autoencoder import MLP_Generic_Autoencoder
 from models.Conv1d_Generic_Autoencoder import Conv1d_Generic_Autoencoder
-from models.Conv1d_Strided_Autoencoder import Conv1d_Strided_Autoencoder
+from models.MLP_Generic_Autoencoder import MLP_Generic_Autoencoder
 
 
 def train_autoencoder(
@@ -98,6 +96,7 @@ def train_autoencoder(
     plt.title("MSE per epoch – train vs test")
     plt.xlabel("Epoch")
     plt.ylabel("MSE loss")
+    plt.yscale("log")
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
@@ -112,7 +111,7 @@ def train_autoencoder(
 ###############################################################################
 
 def evaluate_autoencoder(
-    net: "MLP_Generic_Autoencoder",
+    net: Union["MLP_Generic_Autoencoder", "Conv1d_Generic_Autoencoder"],
     test_loader: torch.utils.data.DataLoader,
     *,
     training_time_s: Optional[float] = None,
@@ -158,7 +157,7 @@ def evaluate_autoencoder(
             decomp_times.append(time.perf_counter() - t0)
 
             # --------------- konwersja typów do obliczeń ---------------
-            recon_t = torch.from_numpy(recon).to(device=device, dtype=x.dtype)
+            recon_t = torch.to(device=device, dtype=x.dtype)
 
             sq_error_sum += ((recon_t - x) ** 2).sum().item()
             abs_error_sum += (recon_t - x).abs().sum().item()
@@ -225,6 +224,14 @@ def run():
     models_to_train = [
         MLP_Generic_Autoencoder(layer_dims=[187, 80, 32]),
         Conv1d_Generic_Autoencoder(latent_dim=32, conv_channels=[64, 128]),
+        MLP_Generic_Autoencoder(layer_dims=[187, 80, 16]),
+        Conv1d_Generic_Autoencoder(latent_dim=16, conv_channels=[64, 128]),
+        MLP_Generic_Autoencoder(layer_dims=[187, 80, 32, 8]),
+        Conv1d_Generic_Autoencoder(latent_dim=64, conv_channels=[128]),
+        MLP_Generic_Autoencoder(layer_dims=[187, 64]),
+        Conv1d_Generic_Autoencoder(latent_dim=32, conv_channels=[80]),
+        MLP_Generic_Autoencoder(layer_dims=[187, 64, 8]),
+        Conv1d_Generic_Autoencoder(latent_dim=8, conv_channels=[32, 80]),
     ]
 
     df_train = load_and_preprocess_data('./data/mitbih_train.csv')
@@ -234,7 +241,7 @@ def run():
     loader_test = pandas_to_loader(df_test)
 
     for model in models_to_train:
-        training_time = train_autoencoder(model, loader_train, loader_test, epochs=15, lr=5e-4)
+        training_time = train_autoencoder(model, loader_train, loader_test, epochs=20, lr=2e-4)
         evaluate_autoencoder(model, loader_test, training_time_s=training_time)
 
 
