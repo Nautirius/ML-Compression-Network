@@ -44,7 +44,7 @@ def train_autoencoder(
     print(f"using {device}")
     net.to(device)
 
-    optimizer = optim.Adam(net.parameters(), lr=lr)
+    optimizer = optim.NAdam(net.parameters(), lr=lr)
     criterion = nn.MSELoss()
 
     os.makedirs(root_out, exist_ok=True)
@@ -146,13 +146,13 @@ def evaluate_autoencoder(
             decomp_times.append(time.perf_counter() - t0)
 
             # --------------- akumulacja do metryk -----
-            y_true.append(x.detach().cpu().numpy().reshape(-1))
-            y_pred.append(recon.detach().cpu().numpy().reshape(-1))
+            y_true.append(x.detach().cpu().numpy())
+            y_pred.append(recon.detach().cpu().numpy())
 
             # zapis pierwszej serii do wykresu
             if first_orig is None:
-                first_orig = y_true[-1]
-                first_recon = y_pred[-1]
+                first_orig = y_true[-1][-1]
+                first_recon = y_pred[-1][-1]
 
     # ----------------------- obliczenie metryk -----------------------
     y_true = np.concatenate(y_true)
@@ -217,16 +217,17 @@ def save_reconstruction_plot(path, original: np.ndarray, reconstruction: np.ndar
 def run():
     models_to_train: list[Union[Conv1d_Generic_Autoencoder, MLP_Generic_Autoencoder]] = [
         Conv1d_Generic_Autoencoder(),
-        # MLP_Generic_Autoencoder(layer_dims=[187, 80, 32]),
-        # Conv1d_Generic_Autoencoder(latent_dim=32, conv_channels=[64, 128]),
-        # MLP_Generic_Autoencoder(layer_dims=[187, 80, 16]),
-        # Conv1d_Generic_Autoencoder(latent_dim=16, conv_channels=[64, 128]),
-        # MLP_Generic_Autoencoder(layer_dims=[187, 80, 32, 8]),
-        # Conv1d_Generic_Autoencoder(latent_dim=64, conv_channels=[128]),
-        # MLP_Generic_Autoencoder(layer_dims=[187, 64]),
-        # Conv1d_Generic_Autoencoder(latent_dim=32, conv_channels=[80]),
-        # MLP_Generic_Autoencoder(layer_dims=[187, 64, 8]),
-        # Conv1d_Generic_Autoencoder(latent_dim=8, conv_channels=[32, 80]),
+        MLP_Generic_Autoencoder(),
+        MLP_Generic_Autoencoder(layer_dims=[187, 80, 32]),
+        Conv1d_Generic_Autoencoder(latent_dim=32, conv_channels=[64, 128]),
+        MLP_Generic_Autoencoder(layer_dims=[187, 80, 16]),
+        Conv1d_Generic_Autoencoder(latent_dim=16, conv_channels=[64, 128]),
+        MLP_Generic_Autoencoder(layer_dims=[187, 80, 32, 8]),
+        Conv1d_Generic_Autoencoder(latent_dim=64, conv_channels=[128]),
+        MLP_Generic_Autoencoder(layer_dims=[187, 64]),
+        Conv1d_Generic_Autoencoder(latent_dim=32, conv_channels=[80]),
+        MLP_Generic_Autoencoder(layer_dims=[187, 64, 8]),
+        Conv1d_Generic_Autoencoder(latent_dim=8, conv_channels=[32, 80]),
     ]
 
     df_train = load_and_preprocess_data('./data/mitbih_train.csv')
@@ -236,7 +237,7 @@ def run():
     loader_test = pandas_to_loader(df_test)
 
     for model in models_to_train:
-        training_time = train_autoencoder(model, loader_train, loader_test, epochs=6, lr=5e-4)
+        training_time = train_autoencoder(model, loader_train, loader_test, epochs=10, lr=5e-4)
         evaluate_autoencoder(model, loader_test, training_time_s=training_time)
 
 

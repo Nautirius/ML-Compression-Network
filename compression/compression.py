@@ -116,7 +116,7 @@ def train_and_save_autoencoder(train_data_dir: str, model: CompressionMethod, ep
     df = load_and_preprocess_data(train_data_dir)
     data_loader = pandas_to_loader(df)
 
-    optimizer = optim.Adam(net.parameters(), lr=lr)
+    optimizer = optim.NAdam(net.parameters(), lr=lr)
     criterion = nn.MSELoss()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     net.to(device)
