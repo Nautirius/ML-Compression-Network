@@ -10,6 +10,7 @@ import numpy as np
 from sklearn.metrics import mean_squared_error
 
 from models.models import MODELS
+from tests import save_reconstruction_plot
 from .CompressionMethod import CompressionMethod
 from data_utils.data_utils import load_and_preprocess_data, pandas_to_loader
 
@@ -43,24 +44,17 @@ def compress_and_save(
     print(f"[compress_and_save] DataLoader ma {len(data_loader)} batchy")
 
     # 4) Kompresuj każdą próbkę
-    compressed_rows = []
+    compressed_rows: list[np.ndarray] = []
     with torch.no_grad():
         for batch_idx, (x,) in enumerate(data_loader):
-            print(x)
             x = x.to(device)
-            z = net.compress(x)            # ← 1-wymiarowy np.ndarray
-            z = z.cpu().numpy()        # awaryjnie zamień Tensor → NumPy
+            z = net.compress(x).cpu().numpy()        # (B, latent_dim)
             compressed_rows.append(z)
-            print(z.shape)
-            print(
-                f"[compress_and_save] Batch {batch_idx + 1}/{len(data_loader)} "
-                f"skompresowany (latent dim = {z.shape[0]})"
-            )
 
-    # 5) Zamień listę na macierz i zapisz do CSV# (N, latent_dim)
-    df_compressed = pd.DataFrame(compressed_rows)
+    # 5) Zapis
+    compressed_mat = np.vstack(compressed_rows)      # (N, latent_dim)
+    df_compressed = pd.DataFrame(compressed_mat)
 
-    # 6) Ustal ścieżkę wyjściową
     if output_path is None:
         output_path = Path(input_path).with_suffix(f"{model.extension}.csv")
     else:
@@ -68,8 +62,9 @@ def compress_and_save(
         if output_path.suffix.lower() != ".csv":
             output_path = output_path.with_suffix(f"{model.extension}.csv")
 
-    df_compressed.to_csv(output_path, index=False, header=False)
-    print(f"[compress_and_save] Zapisano skompresowane dane w {output_path.resolve()}")
+    df_compressed.to_csv(output_path, index=False, header=False, float_format="%.18e",)
+    print(f"[compress] Wektor latentny zapisany w {output_path.resolve()}")
+
 
 
 def decompress_and_save(input_path: str, output_path: Optional[str]):
@@ -93,20 +88,19 @@ def decompress_and_save(input_path: str, output_path: Optional[str]):
     )
     data_loader = pandas_to_loader(df.values)
     decompressed_rows = []
-    # --- dekompresja (cała macierz naraz) ---
     with torch.no_grad():
         for batch_idx, (x,) in enumerate(data_loader):
             x = x.to(device)
-            print("x: " + str(x))
             decompressed = net.decompress(x)
             decompressed_rows.append(decompressed.cpu().numpy())
 
-    # --- zapis ---
+    decompressed_mat = np.vstack(decompressed_rows)
+
     if output_path is None:
         output_path = Path(input_path).with_suffix("").with_suffix(".decompressed.csv")
     output_path = Path(output_path)
 
-    pd.DataFrame(decompressed_rows).to_csv(
+    pd.DataFrame(decompressed_mat).to_csv(
         output_path,
         index=False,
         header=False,
@@ -145,8 +139,8 @@ def train_and_save_autoencoder(train_data_dir: str, model: CompressionMethod, ep
 
 
 def test_model(input_path: str, model: CompressionMethod):
-    compressed_file = input_path + model.extension
-    decompressed_file = input_path + ".decompressed"
+    compressed_file = str(Path(input_path).with_suffix(f".{model.extension}.csv"))
+    decompressed_file = str(Path(input_path).with_suffix(f".decompressed.csv"))
 
     # Kompresja
     compress_and_save(input_path, model, compressed_file)
@@ -163,6 +157,13 @@ def test_model(input_path: str, model: CompressionMethod):
     # Wczytywanie danych CSV
     original = load_and_preprocess_data(input_path)
     reconstructed = pd.read_csv(decompressed_file, delimiter=",", header=None).values
+
+    for i in range(min(10, original.shape[0])):
+        save_reconstruction_plot(
+            str(Path(input_path).with_suffix(f".{i}.png")),
+            original[i],
+            reconstructed[i]
+        )
 
     print(compressed_file)
     print(decompressed_file)

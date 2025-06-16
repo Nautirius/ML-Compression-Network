@@ -36,7 +36,7 @@ class Conv1d_Generic_Autoencoder(nn.Module, Compressor):
         self.kernel_size    = kernel_size
         self.stride         = stride
         self.latent_dim     = latent_dim
-        self.layer_dims = [latent_dim]
+        self.layer_dims = [input_length, latent_dim]
 
         pad = (kernel_size - stride) // 2      # „prawie-same” padding
 
@@ -120,7 +120,7 @@ class Conv1d_Generic_Autoencoder(nn.Module, Compressor):
         z_conv = self.encoder_conv(x)
         z_vec  = self.enc_flatten(z_conv)
         z      = self.encoder_fc(z_vec)
-        return z.detach().flatten()
+        return z.detach()
 
     @torch.no_grad()
     def decompress(self, code: torch.Tensor) -> torch.Tensor:
@@ -128,8 +128,7 @@ class Conv1d_Generic_Autoencoder(nn.Module, Compressor):
         y_vec  = self.decoder_fc(code)
         y_conv = self.dec_unflatten(y_vec)
         out    = self.decoder_conv(y_conv)
-        print("po dekompresji: " + str(out.flatten()))
-        return out.detach().flatten()
+        return out.squeeze(1).detach()
 
     def __str__(self):
         return (

@@ -6,13 +6,16 @@ import time
 from typing import Optional, Union
 
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from torchmetrics.functional.image import peak_signal_noise_ratio
 
 from data_utils.data_utils import load_and_preprocess_data, pandas_to_loader
 from models.Conv1d_Generic_Autoencoder import Conv1d_Generic_Autoencoder
 from models.MLP_Generic_Autoencoder import MLP_Generic_Autoencoder
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
 
 def train_autoencoder(
@@ -117,7 +120,7 @@ def evaluate_autoencoder(
     training_time_s: Optional[float] = None,
     root_out: str = "tests",
     save_json: bool = True,
-    save_plot: bool = True,                   # <── NOWA FLAGA
+    save_plot: bool = True,  # <── NOWA FLAGA
 ) -> dict[str, float]:
     """
     Oblicza metryki rekonstrukcji i – opcjonalnie – zapisuje:
@@ -128,52 +131,48 @@ def evaluate_autoencoder(
     device = next(net.parameters()).device
     net.eval()
 
-    # ---------- pass 1: średnia zbioru (do R²) ----------
-    total_elems, mean_acc = 0, 0.0
-    with torch.no_grad():
-        for (x,) in test_loader:
-            x = x.to(device)
-            total_elems += x.numel()
-            mean_acc += x.sum().item()
-    dataset_mean = mean_acc / total_elems
-
-    # ---------- pass 2: metryki + chwytamy pierwszą próbkę ----------
-    sq_error_sum = abs_error_sum = sq_total_sum = 0.0
+    # -----------------------------------------------------------
+    #  Pętla po zbiorze testowym – jedyny przebieg
+    # -----------------------------------------------------------
     comp_times, decomp_times = [], []
-    first_orig, first_recon = None, None      # ← do wykresu
+    y_true, y_pred = [], []          # ← przechowujemy do obliczeń metryk
+    first_orig, first_recon = None, None
 
     with torch.no_grad():
         for (x,) in test_loader:
             x = x.to(device)
 
-            # pomiar – kompresja
+            # --------------- kompresja ----------------
             t0 = time.perf_counter()
             z = net.compress(x)
             comp_times.append(time.perf_counter() - t0)
 
-            # pomiar – dekompresja
+            # --------------- dekompresja --------------
             t0 = time.perf_counter()
             recon = net.decompress(z)
             decomp_times.append(time.perf_counter() - t0)
 
-            # --------------- konwersja typów do obliczeń ---------------
-            recon_t = torch.to(device=device, dtype=x.dtype)
-
-            sq_error_sum += ((recon_t - x) ** 2).sum().item()
-            abs_error_sum += (recon_t - x).abs().sum().item()
-            sq_total_sum += ((x - dataset_mean) ** 2).sum().item()
+            # --------------- akumulacja do metryk -----
+            y_true.append(x.detach().cpu().numpy().reshape(-1))
+            y_pred.append(recon.detach().cpu().numpy().reshape(-1))
 
             # zapamiętujemy pierwszą serię do wykresu
             if first_orig is None:
-                # x może mieć kształt (C, L) lub (L) – spłaszczamy do ( L )
-                first_orig = x[0].detach().cpu().numpy().reshape(-1)
-                first_recon = recon[0].reshape(-1)
+                first_orig = y_true[-1]
+                first_recon = y_pred[-1]
 
-    # ------------------------- metryki -------------------------
-    mse = sq_error_sum / total_elems
-    mae = abs_error_sum / total_elems
-    r2  = 1.0 - sq_error_sum / sq_total_sum if sq_total_sum else float("nan")
-    psnr = 20 * math.log10(1.0) - 10 * math.log10(mse) if mse > 0 else float("inf")
+    # -----------------------------------------------------------
+    #  Obliczenie metryk za pomocą gotowych bibliotek
+    # -----------------------------------------------------------
+    y_true = np.concatenate(y_true)
+    y_pred = np.concatenate(y_pred)
+
+    mse  = mean_squared_error(y_true, y_pred)
+    mae  = mean_absolute_error(y_true, y_pred)
+    r2   = r2_score(y_true, y_pred)
+    psnr = peak_signal_noise_ratio(
+        torch.tensor(y_pred), torch.tensor(y_true), data_range=1.0
+    ).item()
 
     # CR działa dla MLP – jeśli sieć ma inną strukturę, dostosuj
     compression_ratio = net.layer_dims[0] / net.layer_dims[-1]
@@ -201,18 +200,9 @@ def evaluate_autoencoder(
             json.dump(metrics, fp, indent=2, ensure_ascii=False)
 
     if save_plot and first_orig is not None:
-        fig, ax = plt.subplots(figsize=(8, 4))
-        ax.plot(first_orig, label="oryginał")
-        ax.plot(first_recon, label="rekonstrukcja")
-        ax.set_title("Rekonstrukcja – pierwsza próbka")
-        ax.legend()
-        ax.set_xlabel("indeks próbki")
-        ax.set_ylabel("wartość")
-        fig.tight_layout()
-        fig.savefig(os.path.join(model_dir, "reconstruction.png"), dpi=150)
-        plt.close(fig)
+        save_reconstruction_plot(os.path.join(model_dir, "reconstruction.png"), first_orig, first_recon)
 
-    # ------------------- ładny print w konsoli ------------------
+    # ------------------- ładny print w konsoli -----------------
     print("\n----- Evaluation metrics -----")
     for k, v in metrics.items():
         print(f"{k:18s}: {v: .6f}")
@@ -220,18 +210,32 @@ def evaluate_autoencoder(
     return metrics
 
 
+def save_reconstruction_plot(path, original: np.ndarray, reconstruction: np.ndarray):
+    fig, ax = plt.subplots(figsize=(8, 4))
+    ax.plot(original, label="oryginał")
+    ax.plot(reconstruction, label="rekonstrukcja")
+    ax.set_title("Rekonstrukcja")
+    ax.legend()
+    ax.set_xlabel("indeks próbki")
+    ax.set_ylabel("wartość")
+    fig.tight_layout()
+    fig.savefig(path, dpi=150)
+    plt.close(fig)
+
+
 def run():
-    models_to_train = [
-        MLP_Generic_Autoencoder(layer_dims=[187, 80, 32]),
-        Conv1d_Generic_Autoencoder(latent_dim=32, conv_channels=[64, 128]),
-        MLP_Generic_Autoencoder(layer_dims=[187, 80, 16]),
-        Conv1d_Generic_Autoencoder(latent_dim=16, conv_channels=[64, 128]),
-        MLP_Generic_Autoencoder(layer_dims=[187, 80, 32, 8]),
-        Conv1d_Generic_Autoencoder(latent_dim=64, conv_channels=[128]),
-        MLP_Generic_Autoencoder(layer_dims=[187, 64]),
-        Conv1d_Generic_Autoencoder(latent_dim=32, conv_channels=[80]),
-        MLP_Generic_Autoencoder(layer_dims=[187, 64, 8]),
-        Conv1d_Generic_Autoencoder(latent_dim=8, conv_channels=[32, 80]),
+    models_to_train: list[Union[Conv1d_Generic_Autoencoder, MLP_Generic_Autoencoder]] = [
+        Conv1d_Generic_Autoencoder(),
+        # MLP_Generic_Autoencoder(layer_dims=[187, 80, 32]),
+        # Conv1d_Generic_Autoencoder(latent_dim=32, conv_channels=[64, 128]),
+        # MLP_Generic_Autoencoder(layer_dims=[187, 80, 16]),
+        # Conv1d_Generic_Autoencoder(latent_dim=16, conv_channels=[64, 128]),
+        # MLP_Generic_Autoencoder(layer_dims=[187, 80, 32, 8]),
+        # Conv1d_Generic_Autoencoder(latent_dim=64, conv_channels=[128]),
+        # MLP_Generic_Autoencoder(layer_dims=[187, 64]),
+        # Conv1d_Generic_Autoencoder(latent_dim=32, conv_channels=[80]),
+        # MLP_Generic_Autoencoder(layer_dims=[187, 64, 8]),
+        # Conv1d_Generic_Autoencoder(latent_dim=8, conv_channels=[32, 80]),
     ]
 
     df_train = load_and_preprocess_data('./data/mitbih_train.csv')
@@ -241,7 +245,7 @@ def run():
     loader_test = pandas_to_loader(df_test)
 
     for model in models_to_train:
-        training_time = train_autoencoder(model, loader_train, loader_test, epochs=20, lr=2e-4)
+        training_time = train_autoencoder(model, loader_train, loader_test, epochs=6, lr=5e-4)
         evaluate_autoencoder(model, loader_test, training_time_s=training_time)
 
 

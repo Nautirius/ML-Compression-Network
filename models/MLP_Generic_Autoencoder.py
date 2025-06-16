@@ -37,13 +37,13 @@ class MLP_Generic_Autoencoder(nn.Module, Compressor):
 
         self.eval()
         z = self.encoder(x)
-        return z.detach().flatten()
+        return z.detach()
 
     @torch.no_grad()
     def decompress(self, code: torch.Tensor) -> torch.Tensor:
         self.eval()
         x_hat  = self.decoder(code)
-        return x_hat.detach().flatten()
+        return x_hat.detach()
 
     def __str__(self):
         return f"MLP_Generic_Autoencoder {self.layer_dims}"
