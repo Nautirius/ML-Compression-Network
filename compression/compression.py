@@ -54,8 +54,8 @@ def compress_and_save(
 
     # 5) Zapis
     compressed_mat = np.vstack(compressed_rows)      # (N, latent_dim)
-    print(compressed_mat[15])
     df_compressed = pd.DataFrame(compressed_mat)
+
 
     if output_path is None:
         output_path = Path(input_path).with_suffix(f"{model.extension}.csv")
@@ -141,7 +141,7 @@ def train_and_save_autoencoder(train_data_dir: str, model: CompressionMethod, ep
 
 
 def test_model(input_path: str, model: CompressionMethod):
-    compressed_file = str(Path(input_path).with_suffix(f".{model.extension}.csv"))
+    compressed_file = str(Path(input_path).with_suffix(f"{model.extension}.csv"))
     decompressed_file = str(Path(input_path).with_suffix(f".decompressed.csv"))
 
     # Kompresja
