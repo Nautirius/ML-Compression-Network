@@ -21,11 +21,11 @@ def compress_and_save(
         output_path: Optional[str] = None
 ):
     """Kompresuje podany plik CSV za pomocą wybrangego modelu. Zapisuje skompresowany plik do wskazanej ścieżki."""
-    print(f"[compress_and_save] Start – kompresuję {input_path} modelem {model}")
+    print(f"[compress_and_save] Start - kompresuję {input_path} modelem {model}")
 
     model_path = Path(f"models/saved/{model.value}.pth")
     if not model_path.exists():
-        msg = "[compress_and_save] Brak wytrenowanego modelu – wywołaj najpierw trening!"
+        msg = "[compress_and_save] Brak wytrenowanego modelu - wywołaj najpierw trening!"
         print(msg)
         raise RuntimeError(msg)
 
