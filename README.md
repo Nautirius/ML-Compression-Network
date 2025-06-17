@@ -39,8 +39,8 @@ Sygnał wejściowy jest przekształcany do przestrzeni latentnej (skompresowany)
 Celem modelu jest zminimalizowanie błędu rekonstrukcji przy jednoczesnym zmniejszeniu rozmiaru danych.
 
 Zastosowano modele:
-- `generic_autoencoder` - gęsta sieć MLP (Multilayer Perceptron)
-- `conv1d_generic_autoencoder` - konwolucyjny autoenkoder (1D)
+- Typu `mlp` - gęsta sieć MLP (Multilayer Perceptron)
+- Typu `conv1d` - konwolucyjny autoenkoder (1D)
 
 ---
 
@@ -113,18 +113,32 @@ Dostępne komendy:
 Trenuje autoenkoder na danych treningowych i zapisuje go do pliku `.pth` w katalogu `./models/saved`.
 
 ```bash
-python3 main.py train data/mitbih_train.csv --model conv1d_generic_autoencoder
+python3 main.py train data/mitbih_train.csv --model conv1d_32
 ```
+#### Parametry:
+- `--model` - nazwa modelu ()
+#### Dostępne modele
+Dostępne są dwa typy modeli, pierwszy opiera się na wielowarstowym perceptronie,
+drugi na jednowymiarowej sieci konwolucyjnej
+- mlp_8
+- mlp_16
+- mlp_32
+- mlp_64
+- conv1d_8
+- conv1d_16
+- conv1d_32
+- conv1d_64
 
-Parametry:
-- `--model` - nazwa modelu (`generic_autoencoder` lub `conv1d_generic_autoencoder`)
+Liczba na końcu modelu oznacza do ilu liczb jest konwertowany sygnał
+(im mniejsza liczba tym silniejsza kompresja kosztem jakości)
+
 
 ---
 
 ### Kompresja pliku
 
 ```bash
-python3 main.py compress ./data/ekg1.csv --model conv1d_generic_autoencoder
+python3 main.py compress ./data/ekg1.csv --model conv1d_32
 ```
 
 Parametry:
@@ -137,11 +151,11 @@ Parametry:
 ### Dekompresja pliku
 
 ```bash
-python3 main.py decompress ./data/ekg1.conv1d_generic_autoencoder.csv
+python3 main.py decompress ./data/ekg1.conv1d_32.csv
 ```
 
 Parametry:
-- `filepath` - plik z rozszerzeniem `.model.csv` (np. `.generic_autoencoder.csv`)
+- `filepath` - plik z rozszerzeniem `.model.csv` (np. `.conv1d_32.csv`)
 - `--output` - opcjonalna ścieżka pliku wyjściowego
 
 ---
@@ -151,7 +165,7 @@ Parametry:
 Wykonuje kompresję, dekompresję oraz analizę jakości rekonstrukcji.
 
 ```bash
-python3 main.py test ./data/ekg1.csv --model conv1d_generic_autoencoder
+python3 main.py test ./data/ekg1.csv --model conv1d_32
 ```
 
 ---
@@ -170,8 +184,8 @@ python3 main.py train --help
 ## Przykładowe komendy
 
 ```bash
-python3 main.py train data/mitbih_train.csv --model generic_autoencoder
-python3 main.py compress ./data/ekg1.csv --model generic_autoencoder
-python3 main.py decompress ./data/ekg1.generic_autoencoder.csv
-python3 main.py test ./data/ekg1.csv --model generic_autoencoder
+python3 main.py train data/mitbih_train.csv --model conv1d_32
+python3 main.py compress ./data/ekg1.csv --model conv1d_32
+python3 main.py decompress ./data/ekg1.conv1d_32
+python3 main.py test ./data/ekg1.csv --model conv1d_32
 ```
