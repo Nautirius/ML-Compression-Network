@@ -27,17 +27,9 @@ def train_autoencoder(
         root_out: str = "tests",
         expected_train_MSE: float = 1e-7
 ) -> float:
-    """Train *net* until MSE nie wzrośnie względem poprzedniego kroku.
-
-    - Standardowo trenuje ``epochs`` epok.
-    - **Jeśli** trenowa MSE (na train‑loaderze) wzrośnie względem poprzedniej
-      epoki, pętla *kontynuuje* tak długo, aż MSE znowu spadnie poniżej ostatniego
-      najlepszego poziomu.  Ten mechanizm może wydłużyć trening poza
-      pierwotną liczbę epok.
-    - Aby uniknąć niekończącego się treningu można ustawić
-      ``max_extra_epochs``.  Jeśli ```None```, brak limitu.
-
-    Funkcja zwraca: ``model, training_time_s, train_losses, test_losses``.
+    """
+    Trenuje podaną sieć. Tworzy i zapisuje wykresy.
+    Funkcja zwraca: pure_train_time
     """
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -59,7 +51,7 @@ def train_autoencoder(
 
     while epoch < epochs:
         epoch += 1
-        # ------------------------- train -------------------------
+        # -------------- train ----------------
         net.train()
         running_train = 0.0
         t0_epoch = time.perf_counter()
@@ -74,7 +66,7 @@ def train_autoencoder(
         epoch_train = running_train / len(train_loader)
         train_losses.append(epoch_train)
 
-        # ------------------------- test -------------------------
+        # -------------- test ----------------
         net.eval()
         running_test = 0.0
         with torch.no_grad():
@@ -83,14 +75,12 @@ def train_autoencoder(
                 running_test += criterion(net(x), x).item()
         test_losses.append(running_test / len(test_loader))
 
-        print(
-            f"Epoch {epoch:3d} | train MSE: {epoch_train:.6f} | test MSE: {test_losses[-1]:.6f}"
-        )
+        print(f"Epoch {epoch:3d} | train MSE: {epoch_train:.6f} | test MSE: {test_losses[-1]:.6f}")
 
         if expected_train_MSE >= epoch_train:
             break
 
-    # -------------------- wykresy ---------------------------
+    # -------------- wykresy ----------------
     plt.figure()
     ep_range = range(1, len(train_losses) + 1)
     plt.plot(ep_range, train_losses, marker="o", label="train")
@@ -120,13 +110,14 @@ def evaluate_autoencoder(
     """
     Oblicza metryki rekonstrukcji i opcjonalnie zapisuje:
       - metrics.json
-      - reconstruction.png - wykres pierwszej serii oryginalnej vs zrekonstruowanej
+      - reconstruction.png - wykres serii (sygnału) oryginalnej vs zrekonstruowanej
+    Zwraca dictionary z metrykami.
     """
 
     device = next(net.parameters()).device
     net.eval()
 
-    # ----------------------- pętla po zbiorze testowym -----------------------
+    # --------------- pętla po zbiorze testowym ----------------
     comp_times, decomp_times = [], []
     y_true, y_pred = [], []  # do obliczeń metryk
     first_orig, first_recon = None, None
@@ -135,17 +126,17 @@ def evaluate_autoencoder(
         for (x,) in test_loader:
             x = x.to(device)
 
-            # --------------- kompresja ----------------
+            # -------------- kompresja ----------------
             t0 = time.perf_counter()
             z = net.compress(x)
             comp_times.append(time.perf_counter() - t0)
 
-            # --------------- dekompresja --------------
+            # -------------- dekompresja --------------
             t0 = time.perf_counter()
             recon = net.decompress(z)
             decomp_times.append(time.perf_counter() - t0)
 
-            # --------------- akumulacja do metryk -----
+            # --------- akumulacja do metryk ----------
             y_true.append(x.detach().cpu().numpy())
             y_pred.append(recon.detach().cpu().numpy())
 
@@ -154,7 +145,7 @@ def evaluate_autoencoder(
                 first_orig = y_true[-1][-1]
                 first_recon = y_pred[-1][-1]
 
-    # ----------------------- obliczenie metryk -----------------------
+    # --------- obliczenie metryk ----------
     y_true = np.concatenate(y_true)
     y_pred = np.concatenate(y_pred)
 
@@ -165,7 +156,6 @@ def evaluate_autoencoder(
         torch.tensor(y_pred), torch.tensor(y_true), data_range=1.0
     ).item()
 
-    # CR działa dla MLP - jeśli sieć ma inną strukturę, dostosuj
     compression_ratio = net.layer_dims[0] / net.layer_dims[-1]
 
     metrics = {
@@ -182,7 +172,7 @@ def evaluate_autoencoder(
     if training_time_s is not None:
         metrics["training_time_s"] = training_time_s
 
-    # ----------------------- zapisywanie -----------------------
+    # --------- zapisanie metryk ----------
     model_dir = os.path.join(root_out, str(net))
     os.makedirs(model_dir, exist_ok=True)
 
@@ -193,7 +183,6 @@ def evaluate_autoencoder(
     if save_plot and first_orig is not None:
         save_reconstruction_plot(os.path.join(model_dir, "reconstruction.png"), first_orig, first_recon)
 
-    # ------------------- ładny print w konsoli -----------------
     print("\n----- Evaluation metrics -----")
     for k, v in metrics.items():
         print(f"{k:18s}: {v: .6f}")
@@ -202,6 +191,7 @@ def evaluate_autoencoder(
 
 
 def save_reconstruction_plot(path, original: np.ndarray, reconstruction: np.ndarray):
+    """Tworzy i zapisuje wykres porównujący sygnał oryginalny i zrekonstruowany."""
     fig, ax = plt.subplots(figsize=(8, 4))
     ax.plot(original, label="oryginał")
     ax.plot(reconstruction, label="rekonstrukcja")

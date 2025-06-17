@@ -17,6 +17,7 @@ class MLP_Generic_Autoencoder(nn.Module, Compressor):
 
         self.layer_dims = layer_dims
 
+        # ---------------- Encoder ---------------- #
         encoder_layers = []
         for in_dim, out_dim in zip(layer_dims[:-1], layer_dims[1:]):
             encoder_layers.append(nn.Linear(in_dim, out_dim))
@@ -24,6 +25,7 @@ class MLP_Generic_Autoencoder(nn.Module, Compressor):
         encoder_layers.pop()
         self.encoder = nn.Sequential(*encoder_layers)
 
+        # ---------------- Decoder ---------------- #
         decoder_layers = []
         for in_dim, out_dim in zip(layer_dims[::-1][:-1], layer_dims[::-1][1:]):
             decoder_layers.append(nn.Linear(in_dim, out_dim))

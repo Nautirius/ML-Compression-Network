@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class CompressionMethod(str, Enum):
+    """Klasa enum definiująca listę modeli Autoencoder i obsługująca odpowiadające im rozszerzenia."""
     MLP_GENERIC = 'generic_autoencoder'
     CONV1D_GENERIC = 'conv1d_generic_autoencoder'
 

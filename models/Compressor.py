@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
-
 import torch
 
 
 class Compressor(ABC):
+    """Klasa abstrakcyjna Autoencodera."""
+
     @abstractmethod
     def compress(self, x: torch.Tensor) -> torch.Tensor:
         pass

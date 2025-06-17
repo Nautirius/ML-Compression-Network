@@ -6,7 +6,7 @@ from torch.utils.data import TensorDataset, DataLoader
 
 
 def load_and_preprocess_data(input_path: str, cleaning_strategy: str = "knn") -> np.ndarray:
-    """Loads and preprocesses time series data from a CSV file."""
+    """Ładuje i preprocesuje dane typu szeregu czasowego z pliku CSV."""
     df = pd.read_csv(input_path, header=None)
     X = df.iloc[:, :-1].copy()  # 187 punktów sygnału
     y = df.iloc[:, -1]  # klasa sygnału
@@ -18,7 +18,8 @@ def load_and_preprocess_data(input_path: str, cleaning_strategy: str = "knn") ->
     return X_clean.to_numpy()
 
 
-def pandas_to_loader(x: np.ndarray, shuffle: bool=True) -> DataLoader:
+def pandas_to_loader(x: np.ndarray, shuffle: bool = True) -> DataLoader:
+    """Tworzy i zwraca DataLoader dla podanych danych."""
     X_tensor = torch.tensor(x, dtype=torch.float32)
     dataset = TensorDataset(X_tensor)
     loader = DataLoader(dataset, batch_size=128, shuffle=shuffle)
@@ -44,6 +45,5 @@ def _clean_missing_values(df: pd.DataFrame, strategy: str = "mean", k: int = 5) 
     else:
         raise ValueError(f"Nieznana strategia: {strategy}")
 
-    # Dla pewności – upewnij się, że wszystko jest OK
     assert not df_cleaned.isnull().any().any(), "Wciąż są NaNy po czyszczeniu!"
     return df_cleaned

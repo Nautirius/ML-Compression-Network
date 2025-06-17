@@ -57,7 +57,7 @@ def decompress_cmd(filepath: str, output: Optional[str]):
                 type=click.Path(exists=True, file_okay=True),
                 )
 def train(model: CompressionMethod, train_data_dir: str):
-    """Trenuje dany Autoencoder na zbiorze danych i zapisuje."""
+    """Trenuje dany Autoencoder na zbiorze danych i zapisuje go do pliku."""
     train_and_save_autoencoder(train_data_dir, model, epochs=15)
 
 

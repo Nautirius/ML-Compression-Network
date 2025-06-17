@@ -23,9 +23,9 @@ class Conv1d_Generic_Autoencoder(nn.Module, Compressor):
     ):
         super().__init__()
 
-        # Override with layer_dims if given
+        # użyj layer_dims jeśli podane
         if layer_dims is not None:
-            assert len(layer_dims) >= 3, "layer_dims must have at least 3 elements (input_len, conv..., latent_dim)"
+            assert len(layer_dims) >= 3, "Wymagane co najmniej 3 wymiary (input_len, conv..., latent_dim)"
             input_length = layer_dims[0]
             latent_dim = layer_dims[-1]
             conv_channels = layer_dims[1:-1]
@@ -41,7 +41,7 @@ class Conv1d_Generic_Autoencoder(nn.Module, Compressor):
         self.latent_dim = latent_dim
         self.layer_dims = [input_length] + conv_channels + [latent_dim]
 
-        pad = (kernel_size - stride) // 2  # „prawie-same” padding
+        pad = (kernel_size - stride) // 2  # "prawie-same” padding
 
         # ---------------- Encoder ---------------- #
         seq_lens = [input_length]

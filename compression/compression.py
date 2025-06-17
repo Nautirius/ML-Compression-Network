@@ -16,10 +16,11 @@ from .CompressionMethod import CompressionMethod
 
 
 def compress_and_save(
-    input_path: str,
-    model: CompressionMethod,
-    output_path: Optional[str] = None
+        input_path: str,
+        model: CompressionMethod,
+        output_path: Optional[str] = None
 ):
+    """Kompresuje podany plik CSV za pomocą wybrangego modelu. Zapisuje skompresowany plik do wskazanej ścieżki."""
     print(f"[compress_and_save] Start – kompresuję {input_path} modelem {model}")
 
     model_path = Path(f"models/saved/{model.value}.pth")
@@ -28,34 +29,32 @@ def compress_and_save(
         print(msg)
         raise RuntimeError(msg)
 
-    # 1) Załaduj model
+    # Załaduj model
     net = MODELS[model]()
     net.load_state_dict(torch.load(model_path, map_location="cpu"))
     net.eval()
 
-    # 2) Przygotuj urządzenie
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     net.to(device)
     print(f"[compress_and_save] Używane urządzenie: {device}")
 
-    # 3) Wczytaj dane i loader
+    # Wczytaj dane i loader
     df = load_and_preprocess_data(input_path)
     data_loader = pandas_to_loader(df, shuffle=False)
     print(f"[compress_and_save] DataLoader ma {len(data_loader)} batchy")
 
-    # 4) Kompresuj każdą próbkę
+    # Kompresuj każdą próbkę
     compressed_rows: list[np.ndarray] = []
     with torch.no_grad():
         for batch_idx, (x,) in enumerate(data_loader):
             x = x.to(device)
-            z = net.compress(x)        # (B, latent_dim)
+            z = net.compress(x)  # (B, latent_dim)
             z = z.cpu().numpy()
             compressed_rows.append(z)
 
-    # 5) Zapis
-    compressed_mat = np.vstack(compressed_rows)      # (N, latent_dim)
+    # Zapis
+    compressed_mat = np.vstack(compressed_rows)  # (N, latent_dim)
     df_compressed = pd.DataFrame(compressed_mat)
-
 
     if output_path is None:
         output_path = Path(input_path).with_suffix(f"{model.extension}.csv")
@@ -64,12 +63,12 @@ def compress_and_save(
         if output_path.suffix.lower() != ".csv":
             output_path = output_path.with_suffix(f"{model.extension}.csv")
 
-    df_compressed.to_csv(output_path, index=False, header=False, float_format="%.18e",)
+    df_compressed.to_csv(output_path, index=False, header=False, float_format="%.18e", )
     print(f"[compress] Wektor latentny zapisany w {output_path.resolve()}")
 
 
-
 def decompress_and_save(input_path: str, output_path: Optional[str]):
+    """Dekompresuje podany plik, a następnie zapisuje do podanej ścieżki."""
     extension = CompressionMethod.from_extension(input_path)
     print(f"Dekompresuję {input_path} output: {output_path} {extension}")
 
@@ -112,6 +111,7 @@ def decompress_and_save(input_path: str, output_path: Optional[str]):
 
 
 def train_and_save_autoencoder(train_data_dir: str, model: CompressionMethod, epochs=10, lr=5e-4):
+    """Trenuje podany model przy użyciu wskazanego pliku z danymi. Model zostaje zapisany do późniejszego użycia."""
     net = MODELS[model]()
     df = load_and_preprocess_data(train_data_dir)
     data_loader = pandas_to_loader(df)
@@ -141,6 +141,7 @@ def train_and_save_autoencoder(train_data_dir: str, model: CompressionMethod, ep
 
 
 def test_model(input_path: str, model: CompressionMethod):
+    """Testuje model przy użyciu podanych danych testowych."""
     compressed_file = str(Path(input_path).with_suffix(f"{model.extension}.csv"))
     decompressed_file = str(Path(input_path).with_suffix(f".decompressed.csv"))
 
@@ -153,7 +154,6 @@ def test_model(input_path: str, model: CompressionMethod):
     # Pomiar rozmiaru
     original_size = os.path.getsize(input_path)
     compressed_size = os.path.getsize(compressed_file)
-    # compression_ratio = compressed_size / original_size
     compression_ratio = original_size / compressed_size
 
     # Wczytywanie danych CSV
