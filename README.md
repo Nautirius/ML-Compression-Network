@@ -44,6 +44,17 @@ Zastosowano modele:
 
 ---
 
+## Autorzy
+
+
+| Name                | GitHub Profile                               |
+|---------------------|----------------------------------------------|
+| Andrzej Świętek     | [GitHub Profile](https://github.com/Andrzej-Swietek)|
+| Marcin Knapczyk     | [GitHub Profile](https://github.com/Nautirius)|
+| Krzysztof Konieczny | [GitHub Profile](https://github.com/KrzysztofProgramming)|
+
+---
+
 ## Instalacja i uruchomienie
 
 Aby rozpocząć pracę z projektem:
@@ -164,14 +175,3 @@ python3 main.py compress ./data/ekg1.csv --model generic_autoencoder
 python3 main.py decompress ./data/ekg1.generic_autoencoder.csv
 python3 main.py test ./data/ekg1.csv --model generic_autoencoder
 ```
-
----
-
-## Autorzy
-
-
-| Name                | GitHub Profile                               |
-|---------------------|----------------------------------------------|
-| Andrzej Świętek     | [GitHub Profile](https://github.com/Andrzej-Swietek)|
-| Marcin Knapczyk     | [GitHub Profile](https://github.com/Nautirius)|
-| Krzysztof Konieczny | [GitHub Profile](https://github.com/KrzysztofProgramming)|
