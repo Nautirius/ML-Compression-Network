@@ -110,13 +110,13 @@ def decompress_and_save(input_path: str, output_path: Optional[str]):
     print(f"Zapisano zdekompresowane dane w {output_path}")
 
 
-def train_and_save_autoencoder(train_data_dir: str, model: CompressionMethod, epochs=10, lr=5e-4):
+def train_and_save_autoencoder(train_data_dir: str, model: CompressionMethod, epochs=10, lr=4e-4):
     """Trenuje podany model przy użyciu wskazanego pliku z danymi. Model zostaje zapisany do późniejszego użycia."""
     net = MODELS[model]()
     df = load_and_preprocess_data(train_data_dir)
     data_loader = pandas_to_loader(df)
 
-    optimizer = optim.NAdam(net.parameters(), lr=lr)
+    optimizer = optim.Adam(net.parameters(), lr=lr)
     criterion = nn.MSELoss()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     net.to(device)

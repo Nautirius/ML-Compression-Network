@@ -58,7 +58,11 @@ def decompress_cmd(filepath: str, output: Optional[str]):
                 )
 def train(model: CompressionMethod, train_data_dir: str):
     """Trenuje dany Autoencoder na zbiorze danych i zapisuje go do pliku."""
-    train_and_save_autoencoder(train_data_dir, model, epochs=15)
+    if model.lower().startswith('mlp'):
+        epochs = 12
+    else:
+        epochs = 6
+    train_and_save_autoencoder(train_data_dir, model, epochs=epochs)
 
 
 @cli.command()

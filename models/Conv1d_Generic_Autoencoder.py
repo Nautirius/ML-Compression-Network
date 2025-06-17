@@ -133,5 +133,6 @@ class Conv1d_Generic_Autoencoder(nn.Module, Compressor):
             f"Conv1D_Generic_Autoencoder("
             f"in_len={self.input_length}, "
             f"channels={self.conv_channels}, "
-            f"latent_dim={self.latent_dim})"
+            f"latent_dim={self.latent_dim}), "
+            f"kernel={self.kernel_size}"
         )

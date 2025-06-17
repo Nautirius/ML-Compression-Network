@@ -16,6 +16,8 @@ from models.Conv1d_Generic_Autoencoder import Conv1d_Generic_Autoencoder
 from models.MLP_Generic_Autoencoder import MLP_Generic_Autoencoder
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
+from models.models import MODELS
+
 
 def train_autoencoder(
         net: nn.Module,
@@ -36,7 +38,7 @@ def train_autoencoder(
     print(f"using {device}")
     net.to(device)
 
-    optimizer = optim.NAdam(net.parameters(), lr=lr)
+    optimizer = optim.Adam(net.parameters(), lr=lr)
     criterion = nn.MSELoss()
 
     os.makedirs(root_out, exist_ok=True)
@@ -106,6 +108,7 @@ def evaluate_autoencoder(
         root_out: str = "tests",
         save_json: bool = True,
         save_plot: bool = True,
+        num_examples_plot: int = 10,
 ) -> dict[str, float]:
     """
     Oblicza metryki rekonstrukcji i opcjonalnie zapisuje:
@@ -120,7 +123,8 @@ def evaluate_autoencoder(
     # --------------- pętla po zbiorze testowym ----------------
     comp_times, decomp_times = [], []
     y_true, y_pred = [], []  # do obliczeń metryk
-    first_orig, first_recon = None, None
+    eg_orig: list[np.ndarray] = []  # examples earmarked for plotting
+    eg_recon: list[np.ndarray] = []
 
     with torch.no_grad():
         for (x,) in test_loader:
@@ -137,13 +141,19 @@ def evaluate_autoencoder(
             decomp_times.append(time.perf_counter() - t0)
 
             # --------- akumulacja do metryk ----------
-            y_true.append(x.detach().cpu().numpy())
-            y_pred.append(recon.detach().cpu().numpy())
+            x_np = x.detach().cpu().numpy()
+            recon_np = recon.detach().cpu().numpy()
+            y_true.append(x_np)
+            y_pred.append(recon_np)
 
             # zapis pierwszej serii do wykresu
-            if first_orig is None:
-                first_orig = y_true[-1][-1]
-                first_recon = y_pred[-1][-1]
+            if save_plot and len(eg_orig) < num_examples_plot:
+                for o, r in zip(x_np, recon_np):
+                    if len(eg_orig) < num_examples_plot:
+                        eg_orig.append(o)
+                        eg_recon.append(r)
+                    else:
+                        break
 
     # --------- obliczenie metryk ----------
     y_true = np.concatenate(y_true)
@@ -180,8 +190,10 @@ def evaluate_autoencoder(
         with open(os.path.join(model_dir, "metrics.json"), "w", encoding="utf-8") as fp:
             json.dump(metrics, fp, indent=2, ensure_ascii=False)
 
-    if save_plot and first_orig is not None:
-        save_reconstruction_plot(os.path.join(model_dir, "reconstruction.png"), first_orig, first_recon)
+    if save_plot and eg_orig:
+        for idx, (orig, recon) in enumerate(zip(eg_orig, eg_recon), start=1):
+            fname = "reconstruction_{idx:02d}.png".format(idx=idx)
+            save_reconstruction_plot(os.path.join(model_dir, fname), orig, recon)
 
     print("\n----- Evaluation metrics -----")
     for k, v in metrics.items():
@@ -205,20 +217,7 @@ def save_reconstruction_plot(path, original: np.ndarray, reconstruction: np.ndar
 
 
 def run():
-    models_to_train: list[Union[Conv1d_Generic_Autoencoder, MLP_Generic_Autoencoder]] = [
-        Conv1d_Generic_Autoencoder(),
-        MLP_Generic_Autoencoder(),
-        MLP_Generic_Autoencoder(layer_dims=[187, 80, 32]),
-        Conv1d_Generic_Autoencoder(latent_dim=32, conv_channels=[64, 128]),
-        MLP_Generic_Autoencoder(layer_dims=[187, 80, 16]),
-        Conv1d_Generic_Autoencoder(latent_dim=16, conv_channels=[64, 128]),
-        MLP_Generic_Autoencoder(layer_dims=[187, 80, 32, 8]),
-        Conv1d_Generic_Autoencoder(latent_dim=64, conv_channels=[128]),
-        MLP_Generic_Autoencoder(layer_dims=[187, 64]),
-        Conv1d_Generic_Autoencoder(latent_dim=32, conv_channels=[80]),
-        MLP_Generic_Autoencoder(layer_dims=[187, 64, 8]),
-        Conv1d_Generic_Autoencoder(latent_dim=8, conv_channels=[32, 80]),
-    ]
+    models_to_train: list[Union[Conv1d_Generic_Autoencoder, MLP_Generic_Autoencoder]] = [model() for model in MODELS.values()]
 
     df_train = load_and_preprocess_data('./data/mitbih_train.csv')
     loader_train = pandas_to_loader(df_train)
@@ -227,7 +226,9 @@ def run():
     loader_test = pandas_to_loader(df_test)
 
     for model in models_to_train:
-        training_time = train_autoencoder(model, loader_train, loader_test, epochs=10, lr=5e-4)
+        if type(model) == MLP_Generic_Autoencoder: epochs = 10
+        else: epochs = 5
+        training_time = train_autoencoder(model, loader_train, loader_test, epochs=epochs, lr=4e-4)
         evaluate_autoencoder(model, loader_test, training_time_s=training_time)
 
 
