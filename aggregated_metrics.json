@@ -1,377 +1,122 @@
 [
   {
-    "name": "MLP_Generic_Autoencoder [187, 180, 160, 150, 140, 128, 112, 100, 96, 80, 64, 48, 32, 28, 24, 16]",
+    "name": "Conv1D_Generic_Autoencoder(in_len=187, channels=[32, 64, 128, 256], latent_dim=16), kernel=5",
     "metrics": {
-      "MSE": 0.033838749397329934,
-      "MAE": 0.12588201355857664,
-      "R2": 0.3348510935285841,
-      "PSNR_dB": 14.705856958657256,
+      "MSE": 0.0008300726185552776,
+      "MAE": 0.01637151837348938,
+      "R2": 0.9654695987701416,
+      "PSNR_dB": 30.80882453918457,
       "compression_ratio": 11.6875,
-      "compress_time_ms": 0.4514367847784955,
-      "decompress_time_ms": 0.4196388604531273,
-      "MSE_per_CR": 0.0028952940660817057,
-      "R2_per_CR": 0.02865036094362217,
-      "training_time_s": 45.31079490499906
+      "compress_time_ms": 0.27634714534056104,
+      "decompress_time_ms": 0.2596081337266463,
+      "MSE_per_CR": 7.102225613307188e-05,
+      "R2_per_CR": 0.08260702449370196,
+      "training_time_s": 46.01578166299987
     }
   },
   {
-    "name": "MLP_Generic_Autoencoder [187, 64, 16]",
+    "name": "MLP_Generic_Autoencoder(layer_dims=[187, 100, 32])",
     "metrics": {
-      "MSE": 0.0025252198490611916,
-      "MAE": 0.02793897988827215,
-      "R2": 0.9503632004788981,
-      "PSNR_dB": 25.977008056333474,
-      "compression_ratio": 11.6875,
-      "compress_time_ms": 0.08065738377407015,
-      "decompress_time_ms": 0.05625554066957489,
-      "MSE_per_CR": 0.00021606159136352442,
-      "R2_per_CR": 0.08131449843669716,
-      "training_time_s": 9.953094535998389
-    }
-  },
-  {
-    "name": "MLP_Generic_Autoencoder [187, 64, 8]",
-    "metrics": {
-      "MSE": 0.00400520042334867,
-      "MAE": 0.035041192699846214,
-      "R2": 0.9212720700295256,
-      "PSNR_dB": 23.973757466018426,
-      "compression_ratio": 23.375,
-      "compress_time_ms": 0.07717687213000825,
-      "decompress_time_ms": 0.05463393014462443,
-      "MSE_per_CR": 0.0001713454726566276,
-      "R2_per_CR": 0.039412708878268476,
-      "training_time_s": 9.649943015996541
-    }
-  },
-  {
-    "name": "MLP_Generic_Dropout_Norm [187, 128, 32, 8] dropout=0.1 BatchNorm=True",
-    "metrics": {
-      "MSE": 0.004744352123128019,
-      "MAE": 0.03939191725109135,
-      "R2": 0.9067429885510214,
-      "PSNR_dB": 23.238230853570524,
-      "compression_ratio": 23.375,
-      "compress_time_ms": 0.2123300232068327,
-      "decompress_time_ms": 0.18241927896164015,
-      "MSE_per_CR": 0.00020296693574879226,
-      "R2_per_CR": 0.03879114389523086,
-      "training_time_s": 16.307759216004342
-    }
-  },
-  {
-    "name": "Conv1d_Strided_Autoencoder_[1, 32, 64, 128, 1]_code16leaky_relu",
-    "metrics": {
-      "MSE": 2.7455267609546075e-05,
-      "MAE": 0.0028701381871736095,
-      "R2": 0.9994603275408168,
-      "PSNR_dB": 45.61374318817371,
-      "compression_ratio": 11.6875,
-      "compress_time_ms": 0.22043274428903906,
-      "decompress_time_ms": 0.19534044766387101,
-      "MSE_per_CR": 2.34911380616437e-06,
-      "R2_per_CR": 0.08551532214252978,
-      "training_time_s": 35.727030974001536
-    }
-  },
-  {
-    "name": "Conv1d_Generic_Autoencoder_[1, 32, 64, 128, 1]_code16_leaky_relu",
-    "metrics": {
-      "MSE": 0.0006103356865217945,
-      "MAE": 0.013493522677090973,
-      "R2": 0.988002981107999,
-      "PSNR_dB": 32.14431235964454,
-      "compression_ratio": 11.6875,
-      "compress_time_ms": 0.24004215100471493,
-      "decompress_time_ms": 0.19445471526671818,
-      "MSE_per_CR": 5.2221235210420924e-05,
-      "R2_per_CR": 0.08453501442635286,
-      "training_time_s": 99.82174649199442
-    }
-  },
-  {
-    "name": "MLP_Generic_Dropout_Norm [187, 128, 64, 32, 16] dropout=0.1 BatchNorm=True",
-    "metrics": {
-      "MSE": 0.005946728489248097,
-      "MAE": 0.045560376579938965,
-      "R2": 0.8831085657431985,
-      "PSNR_dB": 22.25721889702023,
-      "compression_ratio": 11.6875,
-      "compress_time_ms": 0.2898444011639925,
-      "decompress_time_ms": 0.2532199185352087,
-      "MSE_per_CR": 0.0005088109937324575,
-      "R2_per_CR": 0.07556009118658383,
-      "training_time_s": 20.59421633900638
-    }
-  },
-  {
-    "name": "MLP_Generic_Autoencoder [187, 128, 64, 32, 16]",
-    "metrics": {
-      "MSE": 0.00329775431058804,
-      "MAE": 0.03227322914731314,
-      "R2": 0.9351779329875193,
-      "PSNR_dB": 24.817817033096077,
-      "compression_ratio": 11.6875,
-      "compress_time_ms": 0.13888125590182065,
-      "decompress_time_ms": 0.11141435463160147,
-      "MSE_per_CR": 0.0002821607966278537,
-      "R2_per_CR": 0.08001522421283587,
-      "training_time_s": 12.797858941998129
-    }
-  },
-  {
-    "name": "MLP_Generic_Dropout_Norm [187, 128, 64, 32, 16] dropout=0.0 BatchNorm=True",
-    "metrics": {
-      "MSE": 0.004547657558531575,
-      "MAE": 0.04437410652879348,
-      "R2": 0.9106093012321258,
-      "PSNR_dB": 23.422122454001656,
-      "compression_ratio": 11.6875,
-      "compress_time_ms": 0.3049394421776564,
-      "decompress_time_ms": 0.26974840111929654,
-      "MSE_per_CR": 0.00038910439003478716,
-      "R2_per_CR": 0.0779130952925883,
-      "training_time_s": 19.109265110004344
-    }
-  },
-  {
-    "name": "MLP_Generic_Dropout_Norm [187, 128, 64, 32, 16, 8] dropout=0.0 BatchNorm=True",
-    "metrics": {
-      "MSE": 0.004718169456447032,
-      "MAE": 0.04251722198088388,
-      "R2": 0.9072576467979013,
-      "PSNR_dB": 23.2622646517186,
-      "compression_ratio": 23.375,
-      "compress_time_ms": 0.3597820813686054,
-      "decompress_time_ms": 0.32650692444507895,
-      "MSE_per_CR": 0.00020184682166618316,
-      "R2_per_CR": 0.03881316136033802,
-      "training_time_s": 21.471674713997345
-    }
-  },
-  {
-    "name": "MLP_Generic_Dropout_Norm [187, 512, 256, 128, 64, 32, 16] dropout=0 BatchNorm=True",
-    "metrics": {
-      "MSE": 0.0039554223109147454,
-      "MAE": 0.04039304031411147,
-      "R2": 0.9222505303932438,
-      "PSNR_dB": 24.028071411148268,
-      "compression_ratio": 11.6875,
-      "compress_time_ms": 0.47943243608579206,
-      "decompress_time_ms": 0.4357880231911495,
-      "MSE_per_CR": 0.0003384318554793365,
-      "R2_per_CR": 0.07890913629033101,
-      "training_time_s": 41.04869249199692
-    }
-  },
-  {
-    "name": "MLP_Generic_Dropout_Norm [187, 128, 32, 8] dropout=0 BatchNorm=True",
-    "metrics": {
-      "MSE": 0.004347180642429585,
-      "MAE": 0.04201126489625389,
-      "R2": 0.9145499607324674,
-      "PSNR_dB": 23.617923127927494,
-      "compression_ratio": 23.375,
-      "compress_time_ms": 0.21426268614409627,
-      "decompress_time_ms": 0.182233139470512,
-      "MSE_per_CR": 0.00018597564245688064,
-      "R2_per_CR": 0.03912513200994513,
-      "training_time_s": 17.514290193994384
-    }
-  },
-  {
-    "name": "Conv1d_Strided_Autoencoder2_[1, 32, 64, 128, 1]_s1_code16",
-    "metrics": {
-      "MSE": 2.427064778374362e-05,
-      "MAE": 0.004514128052120724,
-      "R2": 0.999522925783369,
-      "PSNR_dB": 46.149186321908935,
-      "compression_ratio": 11.6875,
-      "compress_time_ms": 0.2500606336726314,
-      "decompress_time_ms": 0.22601065676670173,
-      "MSE_per_CR": 2.0766329654539997e-06,
-      "R2_per_CR": 0.08552067814189253,
-      "training_time_s": 78.96173688900672
-    }
-  },
-  {
-    "name": "MLP_Generic_Autoencoder [187, 128, 64, 32, 16, 8]",
-    "metrics": {
-      "MSE": 0.00554208140101506,
-      "MAE": 0.04072744199279701,
-      "R2": 0.8910624819039822,
-      "PSNR_dB": 22.563270996739533,
-      "compression_ratio": 23.375,
-      "compress_time_ms": 0.17685349429971106,
-      "decompress_time_ms": 0.1427759650966415,
-      "MSE_per_CR": 0.00023709439148727527,
-      "R2_per_CR": 0.03812032008145378,
-      "training_time_s": 14.372470479996991
-    }
-  },
-  {
-    "name": "MLP_Generic_Autoencoder [187, 64, 32]",
-    "metrics": {
-      "MSE": 0.001320881740733331,
-      "MAE": 0.020493287992153657,
-      "R2": 0.9740361844134566,
-      "PSNR_dB": 28.79136063268134,
+      "MSE": 0.001667023985646665,
+      "MAE": 0.0247325599193573,
+      "R2": 0.9201392531394958,
+      "PSNR_dB": 27.780569076538086,
       "compression_ratio": 5.84375,
-      "compress_time_ms": 0.07707590131843084,
-      "decompress_time_ms": 0.05483034882947618,
-      "MSE_per_CR": 0.00022603323905597109,
-      "R2_per_CR": 0.16667998877663429,
-      "training_time_s": 9.544444777002354
+      "compress_time_ms": 0.30590798253924306,
+      "decompress_time_ms": 0.24916033139244215,
+      "MSE_per_CR": 0.0002852661365812475,
+      "R2_per_CR": 0.1574569844944592,
+      "training_time_s": 12.095167238999238
     }
   },
   {
-    "name": "MLP_Generic_Dropout_Norm [187, 512, 256, 128, 64, 32, 16] dropout=0.1 BatchNorm=True",
+    "name": "MLP_Generic_Autoencoder(layer_dims=[187, 90, 40, 16])",
     "metrics": {
-      "MSE": 0.006476519296689636,
-      "MAE": 0.046553598469450806,
-      "R2": 0.8726947710160157,
-      "PSNR_dB": 21.88658336162492,
+      "MSE": 0.002443986712023616,
+      "MAE": 0.027740593999624252,
+      "R2": 0.901235818862915,
+      "PSNR_dB": 26.118993759155273,
       "compression_ratio": 11.6875,
-      "compress_time_ms": 0.4675470930356654,
-      "decompress_time_ms": 0.42472497672099774,
-      "MSE_per_CR": 0.0005541406884868138,
-      "R2_per_CR": 0.07466907131687835,
-      "training_time_s": 47.78318954900169
+      "compress_time_ms": 0.1335790639713682,
+      "decompress_time_ms": 0.11262298254265725,
+      "MSE_per_CR": 0.00020911116252608476,
+      "R2_per_CR": 0.07711108610591787,
+      "training_time_s": 10.133018739000363
     }
   },
   {
-    "name": "MLP_Generic_Autoencoder [187, 128, 32, 8]",
+    "name": "MLP_Generic_Autoencoder(layer_dims=[187, 64])",
     "metrics": {
-      "MSE": 0.003062185409471839,
-      "MAE": 0.03216985908397026,
-      "R2": 0.9398083762030777,
-      "PSNR_dB": 25.139685171411127,
+      "MSE": 0.0004517848719842732,
+      "MAE": 0.011327509768307209,
+      "R2": 0.9717913269996643,
+      "PSNR_dB": 33.45066452026367,
+      "compression_ratio": 2.921875,
+      "compress_time_ms": 0.15739942437734455,
+      "decompress_time_ms": 0.11475672677396538,
+      "MSE_per_CR": 0.0001546215604652058,
+      "R2_per_CR": 0.332591684106837,
+      "training_time_s": 6.9970403159986745
+    }
+  },
+  {
+    "name": "Conv1D_Generic_Autoencoder(in_len=187, channels=[32, 64, 128, 256], latent_dim=64), kernel=5",
+    "metrics": {
+      "MSE": 0.0001484269741922617,
+      "MAE": 0.007174293510615826,
+      "R2": 0.9936053156852722,
+      "PSNR_dB": 38.284854888916016,
+      "compression_ratio": 2.921875,
+      "compress_time_ms": 0.2653910523222717,
+      "decompress_time_ms": 0.25359639532727546,
+      "MSE_per_CR": 5.0798536621950526e-05,
+      "R2_per_CR": 0.34005743424522683,
+      "training_time_s": 56.030761645000894
+    }
+  },
+  {
+    "name": "Conv1D_Generic_Autoencoder(in_len=187, channels=[32, 64, 128, 256], latent_dim=8), kernel=5",
+    "metrics": {
+      "MSE": 0.0016736875986680388,
+      "MAE": 0.022046200931072235,
+      "R2": 0.9399663805961609,
+      "PSNR_dB": 27.76323699951172,
       "compression_ratio": 23.375,
-      "compress_time_ms": 0.10998746512446222,
-      "decompress_time_ms": 0.08397194195039932,
-      "MSE_per_CR": 0.00013100258436243162,
-      "R2_per_CR": 0.04020570593382151,
-      "training_time_s": 11.567478704004316
+      "compress_time_ms": 0.2776409127744595,
+      "decompress_time_ms": 0.26361106396041917,
+      "MSE_per_CR": 7.160160849916744e-05,
+      "R2_per_CR": 0.04021246548004966,
+      "training_time_s": 43.89852373799931
     }
   },
   {
-    "name": "MLP_Generic_Autoencoder [187, 512, 256, 128, 64, 32, 16, 8]",
+    "name": "MLP_Generic_Autoencoder(layer_dims=[187, 80, 32, 8])",
     "metrics": {
-      "MSE": 0.004530231604067909,
-      "MAE": 0.03614581474380437,
-      "R2": 0.9109518325527893,
-      "PSNR_dB": 23.43879594499863,
+      "MSE": 0.0037119491025805473,
+      "MAE": 0.0336449071764946,
+      "R2": 0.8690268993377686,
+      "PSNR_dB": 24.303964614868164,
       "compression_ratio": 23.375,
-      "compress_time_ms": 0.24124339542627135,
-      "decompress_time_ms": 0.20580118598445551,
-      "MSE_per_CR": 0.00019380669963926886,
-      "R2_per_CR": 0.0389712013926327,
-      "training_time_s": 21.5607874289999
+      "compress_time_ms": 0.38982936630312653,
+      "decompress_time_ms": 0.3277932151451201,
+      "MSE_per_CR": 0.00015879996160772394,
+      "R2_per_CR": 0.03717762136204358,
+      "training_time_s": 21.132473768998352
     }
   },
   {
-    "name": "MLP_Generic_Dropout_Norm [187, 512, 256, 128, 64, 32, 16, 8] dropout=0.0 BatchNorm=True",
+    "name": "Conv1D_Generic_Autoencoder(in_len=187, channels=[32, 64, 128, 256], latent_dim=32), kernel=5",
     "metrics": {
-      "MSE": 0.007563820510748846,
-      "MAE": 0.05553501011304706,
-      "R2": 0.8513223129413768,
-      "PSNR_dB": 21.212587855007445,
-      "compression_ratio": 23.375,
-      "compress_time_ms": 0.5224852616371463,
-      "decompress_time_ms": 0.484084976812673,
-      "MSE_per_CR": 0.00032358590420315916,
-      "R2_per_CR": 0.036420205901235375,
-      "training_time_s": 47.81098952500179
-    }
-  },
-  {
-    "name": "Conv1d_Generic_Autoencoder_[1, 32, 64, 128, 1]_code16",
-    "metrics": {
-      "MSE": 0.0008070840066571078,
-      "MAE": 0.015314124702447628,
-      "R2": 0.9841356120693774,
-      "PSNR_dB": 30.930812586746704,
-      "compression_ratio": 11.6875,
-      "compress_time_ms": 0.2395203197899486,
-      "decompress_time_ms": 0.19220346500734978,
-      "MSE_per_CR": 6.90553160776135e-05,
-      "R2_per_CR": 0.08420411654069539,
-      "training_time_s": 101.45658890199047
-    }
-  },
-  {
-    "name": "Conv1d_Strided_Autoencoder_[1, 32, 64, 128, 1]_s4_code16",
-    "metrics": {
-      "MSE": 0.02967208213622285,
-      "MAE": 0.11052684159074246,
-      "R2": 0.41675288365820073,
-      "PSNR_dB": 15.276519774935815,
-      "compression_ratio": 11.6875,
-      "compress_time_ms": 0.22246212769417514,
-      "decompress_time_ms": 0.19053302908422518,
-      "MSE_per_CR": 0.0025387877763613136,
-      "R2_per_CR": 0.03565800074080862,
-      "training_time_s": 22.33792342500601
-    }
-  },
-  {
-    "name": "Conv1d_Strided_Autoencoder_[1, 32, 64, 128, 1]_s1_code16",
-    "metrics": {
-      "MSE": 2.0482791521299854e-06,
-      "MAE": 0.0008454014781181237,
-      "R2": 0.9999597381502312,
-      "PSNR_dB": 56.88610855329013,
-      "compression_ratio": 11.6875,
-      "compress_time_ms": 0.24455430231978956,
-      "decompress_time_ms": 0.2257620174130479,
-      "MSE_per_CR": 1.752538311982875e-07,
-      "R2_per_CR": 0.08555805246205186,
-      "training_time_s": 91.4856001670014
-    }
-  },
-  {
-    "name": "MLP_Generic_Dropout_Norm [187, 128, 64, 32, 16, 8] dropout=0.1 BatchNorm=True",
-    "metrics": {
-      "MSE": 0.010785674098159868,
-      "MAE": 0.059918455578300715,
-      "R2": 0.7879921846029554,
-      "PSNR_dB": 19.671527065686377,
-      "compression_ratio": 23.375,
-      "compress_time_ms": 0.38347929658325586,
-      "decompress_time_ms": 0.3472330989647754,
-      "MSE_per_CR": 0.00046141921275550237,
-      "R2_per_CR": 0.03371089559798739,
-      "training_time_s": 25.120784197999456
-    }
-  },
-  {
-    "name": "MLP_Generic_Dropout_Norm [187, 512, 256, 128, 64, 32, 16, 8] dropout=0.1 BatchNorm=True",
-    "metrics": {
-      "MSE": 0.01174845198797124,
-      "MAE": 0.06252547138469926,
-      "R2": 0.7690674120956256,
-      "PSNR_dB": 19.30019353594097,
-      "compression_ratio": 23.375,
-      "compress_time_ms": 0.7048565814625891,
-      "decompress_time_ms": 0.6257605232455061,
-      "MSE_per_CR": 0.000502607571677914,
-      "R2_per_CR": 0.032901279661844945,
-      "training_time_s": 38.88476709400129
-    }
-  },
-  {
-    "name": "MLP_Generic_Autoencoder [187, 512, 256, 128, 64, 32, 16]",
-    "metrics": {
-      "MSE": 0.0037742821248016875,
-      "MAE": 0.03218817719053204,
-      "R2": 0.9258110988949905,
-      "PSNR_dB": 24.231656397659123,
-      "compression_ratio": 11.6875,
-      "compress_time_ms": 0.20933109860993152,
-      "decompress_time_ms": 0.17458327904531087,
-      "MSE_per_CR": 0.00032293322992955615,
-      "R2_per_CR": 0.07921378386267298,
-      "training_time_s": 20.325809640002262
+      "MSE": 0.00036833295598626137,
+      "MAE": 0.010819120332598686,
+      "R2": 0.9834481477737427,
+      "PSNR_dB": 34.33757781982422,
+      "compression_ratio": 5.84375,
+      "compress_time_ms": 0.262887796473711,
+      "decompress_time_ms": 0.250815738375655,
+      "MSE_per_CR": 6.303023845754205e-05,
+      "R2_per_CR": 0.16829059213240516,
+      "training_time_s": 48.73532356400028
     }
   }
 ]
