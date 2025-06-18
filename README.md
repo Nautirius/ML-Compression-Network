@@ -54,7 +54,12 @@ Aby rozpocząć pracę z projektem:
    ```bash
    pip install -r requirements.txt
    ```
-
+4. **Dekompresja plików z danymi testowymi i treningowymi**
+   - Linux/macOS
+       ```bash
+       unzip ./data/mitbih_test.zip -d ./data && \
+       unzip ./data/mitbih_train.zip -d ./data
+       ```
 ---
 
 ## Dane wejściowe
@@ -161,4 +166,12 @@ python3 main.py train data/mitbih_train.csv --model conv1d_32
 python3 main.py compress ./data/ekg1.csv --model conv1d_32
 python3 main.py decompress ./data/ekg1.conv1d_32
 python3 main.py test ./data/ekg1.csv --model conv1d_32
+```
+
+# Pełne testowanie modeli:
+Uruchomienie skryptu `tests.py` poskutkuje wytrenowanie i wygenerowaniem statystyk jak również przykłądowych
+rekonstrukcji w folderze `./tests/`. Podczas wykonywania tego skryptu wykrenowane sieci nie są
+nigdzie zapisywane więc nie bedą dostępne przy uruchamianiu skryptu `main.py`
+```bash
+python3 tests.py
 ```
