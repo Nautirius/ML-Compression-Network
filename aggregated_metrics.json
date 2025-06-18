@@ -1,0 +1,122 @@
+[
+  {
+    "name": "Conv1D_Generic_Autoencoder(in_len=187, channels=[32, 64, 128, 256], latent_dim=16), kernel=5",
+    "metrics": {
+      "MSE": 0.0008300726185552776,
+      "MAE": 0.01637151837348938,
+      "R2": 0.9654695987701416,
+      "PSNR_dB": 30.80882453918457,
+      "compression_ratio": 11.6875,
+      "compress_time_ms": 0.27634714534056104,
+      "decompress_time_ms": 0.2596081337266463,
+      "MSE_per_CR": 7.102225613307188e-05,
+      "R2_per_CR": 0.08260702449370196,
+      "training_time_s": 46.01578166299987
+    }
+  },
+  {
+    "name": "MLP_Generic_Autoencoder(layer_dims=[187, 100, 32])",
+    "metrics": {
+      "MSE": 0.001667023985646665,
+      "MAE": 0.0247325599193573,
+      "R2": 0.9201392531394958,
+      "PSNR_dB": 27.780569076538086,
+      "compression_ratio": 5.84375,
+      "compress_time_ms": 0.30590798253924306,
+      "decompress_time_ms": 0.24916033139244215,
+      "MSE_per_CR": 0.0002852661365812475,
+      "R2_per_CR": 0.1574569844944592,
+      "training_time_s": 12.095167238999238
+    }
+  },
+  {
+    "name": "MLP_Generic_Autoencoder(layer_dims=[187, 90, 40, 16])",
+    "metrics": {
+      "MSE": 0.002443986712023616,
+      "MAE": 0.027740593999624252,
+      "R2": 0.901235818862915,
+      "PSNR_dB": 26.118993759155273,
+      "compression_ratio": 11.6875,
+      "compress_time_ms": 0.1335790639713682,
+      "decompress_time_ms": 0.11262298254265725,
+      "MSE_per_CR": 0.00020911116252608476,
+      "R2_per_CR": 0.07711108610591787,
+      "training_time_s": 10.133018739000363
+    }
+  },
+  {
+    "name": "MLP_Generic_Autoencoder(layer_dims=[187, 64])",
+    "metrics": {
+      "MSE": 0.0004517848719842732,
+      "MAE": 0.011327509768307209,
+      "R2": 0.9717913269996643,
+      "PSNR_dB": 33.45066452026367,
+      "compression_ratio": 2.921875,
+      "compress_time_ms": 0.15739942437734455,
+      "decompress_time_ms": 0.11475672677396538,
+      "MSE_per_CR": 0.0001546215604652058,
+      "R2_per_CR": 0.332591684106837,
+      "training_time_s": 6.9970403159986745
+    }
+  },
+  {
+    "name": "Conv1D_Generic_Autoencoder(in_len=187, channels=[32, 64, 128, 256], latent_dim=64), kernel=5",
+    "metrics": {
+      "MSE": 0.0001484269741922617,
+      "MAE": 0.007174293510615826,
+      "R2": 0.9936053156852722,
+      "PSNR_dB": 38.284854888916016,
+      "compression_ratio": 2.921875,
+      "compress_time_ms": 0.2653910523222717,
+      "decompress_time_ms": 0.25359639532727546,
+      "MSE_per_CR": 5.0798536621950526e-05,
+      "R2_per_CR": 0.34005743424522683,
+      "training_time_s": 56.030761645000894
+    }
+  },
+  {
+    "name": "Conv1D_Generic_Autoencoder(in_len=187, channels=[32, 64, 128, 256], latent_dim=8), kernel=5",
+    "metrics": {
+      "MSE": 0.0016736875986680388,
+      "MAE": 0.022046200931072235,
+      "R2": 0.9399663805961609,
+      "PSNR_dB": 27.76323699951172,
+      "compression_ratio": 23.375,
+      "compress_time_ms": 0.2776409127744595,
+      "decompress_time_ms": 0.26361106396041917,
+      "MSE_per_CR": 7.160160849916744e-05,
+      "R2_per_CR": 0.04021246548004966,
+      "training_time_s": 43.89852373799931
+    }
+  },
+  {
+    "name": "MLP_Generic_Autoencoder(layer_dims=[187, 80, 32, 8])",
+    "metrics": {
+      "MSE": 0.0037119491025805473,
+      "MAE": 0.0336449071764946,
+      "R2": 0.8690268993377686,
+      "PSNR_dB": 24.303964614868164,
+      "compression_ratio": 23.375,
+      "compress_time_ms": 0.38982936630312653,
+      "decompress_time_ms": 0.3277932151451201,
+      "MSE_per_CR": 0.00015879996160772394,
+      "R2_per_CR": 0.03717762136204358,
+      "training_time_s": 21.132473768998352
+    }
+  },
+  {
+    "name": "Conv1D_Generic_Autoencoder(in_len=187, channels=[32, 64, 128, 256], latent_dim=32), kernel=5",
+    "metrics": {
+      "MSE": 0.00036833295598626137,
+      "MAE": 0.010819120332598686,
+      "R2": 0.9834481477737427,
+      "PSNR_dB": 34.33757781982422,
+      "compression_ratio": 5.84375,
+      "compress_time_ms": 0.262887796473711,
+      "decompress_time_ms": 0.250815738375655,
+      "MSE_per_CR": 6.303023845754205e-05,
+      "R2_per_CR": 0.16829059213240516,
+      "training_time_s": 48.73532356400028
+    }
+  }
+]
