@@ -169,9 +169,9 @@ python3 main.py test ./data/ekg1.csv --model conv1d_32
 ```
 
 # Pełne testowanie modeli:
-Uruchomienie skryptu `tests.py` poskutkuje wytrenowanie i wygenerowaniem statystyk jak również przykłądowych
+Uruchomienie skryptu `tests.py` poskutkuje wytrenowanie i wygenerowaniem statystyk jak również przykładowych
 rekonstrukcji w folderze `./tests/`. Podczas wykonywania tego skryptu wykrenowane sieci nie są
-nigdzie zapisywane więc nie bedą dostępne przy uruchamianiu skryptu `main.py`
+nigdzie zapisywane więc nie bedą dostępne przy uruchamianiu skryptu `main.py`.
 ```bash
 python3 tests.py
 ```
